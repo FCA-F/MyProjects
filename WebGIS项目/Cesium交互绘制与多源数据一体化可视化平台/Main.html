@@ -76,14 +76,14 @@
         <button id="isShowMessageButton" style="width:100px;height:30px" onclick="F_displayMessage()">隐藏信息</button>
     </div>
     <script>
-        Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY';
+        Cesium.Ion.defaultAccessToken='请输入您的Token';
         let viewer=new Cesium.Viewer('cesiumContainer');
         viewer.scene.globe.depthTestAgainstTerrain=true;
         let tileset,starCartographic,params,mStar;
         async function F_Load()
         {
             viewer.terrainProvider=await Cesium.createWorldTerrainAsync();
-            tileset=await Cesium.Cesium3DTileset.fromUrl("./data/da_yan_ta/tileset.json");
+            tileset=await Cesium.Cesium3DTileset.fromUrl("请输入您的json文件（3DTiles）");
             viewer.scene.primitives.add(tileset);
             viewer.zoomTo(tileset);
             
