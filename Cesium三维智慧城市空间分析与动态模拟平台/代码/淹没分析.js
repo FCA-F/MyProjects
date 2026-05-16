@@ -11,6 +11,7 @@ function drawWaterRegion()
     {
         isDrawWater=true;
         drawWaterButton.style.backgroundColor='red';
+
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
@@ -61,6 +62,7 @@ function drawWaterRegion()
     {
         isDrawWater=false;
         drawWaterButton.style.backgroundColor='greenyellow';
+
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
@@ -96,17 +98,19 @@ function drawWaterPolygon(positions){
 
 //开始/终止涨水
 let openWater=false;//是否涨水
-function F_water()
+function F_waterAnalysis()
 {
     if(!openWater)
     {
         openWater=true;
         waterAnalysisButton.style.backgroundColor='red';
+        waterAnalysisButton.textContent='结束';
     }
     else
     {
         openWater=false;
         waterAnalysisButton.style.backgroundColor='green';
+        waterAnalysisButton.textContent='开始';
     }
 }
 function F_zero()

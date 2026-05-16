@@ -6,9 +6,10 @@ function F_sunButton()
 {
     if(!sunAnalysis)
     {
-        sunButton.style.backgroundColor='red';
-        
         sunAnalysis=true;
+        sunButton.style.backgroundColor='red';
+        sunButton.textContent='结束';
+        
         viewer.shadows=true;
         let dayText=document.getElementById('dayText');
         let startHourText=document.getElementById('startHourText');
@@ -34,8 +35,10 @@ function F_sunButton()
     }
     else
     {
-        sunButton.style.backgroundColor='green';
         sunAnalysis=false;
+        sunButton.style.backgroundColor='green';
+        sunButton.textContent='开始';
+
         viewer.shadows=false;
         viewer.scene.globe.enableLighting=false;
         viewer.clock.shouldAnimate=false;

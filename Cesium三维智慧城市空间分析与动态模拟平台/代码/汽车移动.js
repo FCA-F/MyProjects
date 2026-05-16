@@ -68,12 +68,16 @@ function carMove()
     {
         carMoving=true;
         carMoveButton.style.backgroundColor='red';
+        carMoveButton.textContent='结束';
+
         move();
     }
     else
     {
         carMoving=false;
         carMoveButton.style.backgroundColor='green';
+        carMoveButton.textContent='开始';
+
         stopMove();
     }
 

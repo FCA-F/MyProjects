@@ -9,9 +9,9 @@
     <style>
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;padding:0;overflow:hidden}
         #leftTable{position:absolute;top:10px;left:10px;background-color:rgba(0,0,0,0.8)}
-        #rightTable{position:absolute;top:50px;right:10px}
+        #rightTable{position:absolute;top:70px;right:10px}
         .drawButton{background-color:greenyellow;width:70px}
-        .startOrStopButton{background-color:green;}
+        .startOrStopButton{background-color:green;width:64px}
         .titleText{color:yellow;border-top:3px solid rgba(255,255,255,0.3);}
     </style>
 </head>
@@ -72,7 +72,7 @@
             <td style="color:white">日照速度&emsp;&emsp;&nbsp;<input type="text" id="sunSpeedText" value="1600" onchange="F_sunSpeedText()"></td>
         </tr>
         <tr>
-            <td><button id="sunButton" onclick="F_sunButton()" class="startOrStopButton">开始/结束</button></td>
+            <td><button id="sunButton" onclick="F_sunButton()" class="startOrStopButton">开始</button></td>
         </tr>
         <!--淹没分析-->
         <tr>
@@ -93,7 +93,7 @@
             <input text="text" id="waterHeightText" value="0" onchange="F_waterHeightText()"></td>
         </tr>
         <tr>
-            <td><button id="waterAnalysisButton" onclick="F_water()" class="startOrStopButton">开始/结束</button>&emsp;&nbsp;&nbsp;
+            <td colspan="2"><button id="waterAnalysisButton" onclick="F_waterAnalysis()" class="startOrStopButton">开始</button>&emsp;&emsp;
             <button onclick="F_zero()">水位归零</button></td>
         </tr>
         <!--通视分析-->
@@ -133,26 +133,26 @@
             <td class="titleText">汽车移动</td> 
         </tr>
         <tr>
-            <td><button onclick="carMove()" id="carMoveButton" class="startOrStopButton">开始/结束</button>&emsp;&emsp;
+            <td><button onclick="carMove()" id="carMoveButton" class="startOrStopButton">开始</button>&emsp;&emsp;
             <button onclick="setViewCar()">定位</button></td>
         </tr>
     </table>
     <table id="rightTable">
         <tr>
-            <td><button onclick="F_savePictureButton()" style="background-color:aqua">&emsp;截图&emsp;</button></td>
+            <td><button onclick="F_savePictureButton()" style="background-color:rgb(165,243,243)">&emsp;截图&emsp;</button></td>
         </tr>
         <tr>
-            <td><button onclick="F_setView()" style="background-color:aqua">&emsp;定位&emsp;</button></td>
+            <td><button onclick="F_setView()" style="background-color:rgb(165,243,243)">&emsp;定位&emsp;</button></td>
         </tr>
         <tr>
-            <td><button onclick="F_mask()" id="maskButton" style="background-color:aqua">&emsp;遮罩&emsp;</button></td>
+            <td><button onclick="F_mask()" id="maskButton" style="background-color:rgb(165,243,243)">&emsp;遮罩&emsp;</button></td>
         </tr>
         <tr>
             <td><button onclick="F_removeAllEntities()" style="background-color:red">&emsp;清空&emsp;</button></td>
         </tr>
     </table>
     <script>
-        Cesium.Ion.defaultAccessToken='您的Token';
+        Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY';
         let viewer=new Cesium.Viewer("cesiumContainer",{
             baseLayerPicker:false,
             animation:false,
