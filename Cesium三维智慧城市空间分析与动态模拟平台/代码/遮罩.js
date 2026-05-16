@@ -47,7 +47,7 @@ function F_mask()
     else
     {
         isMask=false;
-        maskButton.style.backgroundColor='aqua';
+        maskButton.style.backgroundColor='rgb(165,243,243)';
 
         viewer.entities.remove(mask);
         viewer.entities.remove(maskPolyline);

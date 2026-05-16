@@ -65,6 +65,7 @@ function measureDistance()
     {
         ismeasureDistance=false;
         measureDistanceButton.style.backgroundColor='greenyellow';
+
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
@@ -110,8 +111,8 @@ function drawDistanceLine(positions)
         polyline:{
             positions:positions,
             material:Cesium.Color.RED,
-            width:4
-        }
+            width:4,
+            depthFailMaterial:Cesium.Color.RED}
     })
     return shape;
 }
