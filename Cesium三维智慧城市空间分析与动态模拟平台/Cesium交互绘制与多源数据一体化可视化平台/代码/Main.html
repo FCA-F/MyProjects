@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width initial-scale=1.0">
+    <link rel="stylesheet" href="./cesium/node_modules/cesium/Build/Cesium/Widgets/widgets.css">
+    <script src="./cesium/node_modules/cesium/Build/Cesium/Cesium.js"></script>
+    <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
+    <style>
+        html,body,#cesiumContainer{width:100%;height:100%;margin:0;padding:0;overflow:hidden}
+        #leftTable{position:absolute;top:10px;left:10px;background-color:rgba(0,0,0,0.8)}
+        #rightTable{position:absolute;top:50px;right:10px}
+        .drawButton{background-color:greenyellow;width:70px}
+        .startOrStopButton{background-color:green;}
+        .titleText{color:yellow;border-top:3px solid rgba(255,255,255,0.3);}
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <table id="leftTable">
+        <!--图层-->
+        <tr>
+            <td style="color:yellow">图层</td>
+        </tr>
+        <tr style="color:white">
+            <td colspan="2">
+                <button onclick="F_defaultMaterial()" id="defaultMaterialButton" style="width:74px;background-color:red">默认</button>
+                <button onclick="F_contourMaterial()" id="contourMaterialButton" style="width:74px">等高线</button>
+                <button onclick="F_slopeMaterial()" id="slopeMaterialButton" style="width:74px">坡度</button>
+                <button onclick="F_aspectMaterial()" id="aspectMaterialButton" style="width:74px">坡向</button>
+            </td>
+        </tr>
+        <tr>
+            <td style="color:white">等高线间距</td>
+        </tr>
+        <tr>
+            <td colspan="2"><input type="range" id="contourSpaceRange" min="0" max="300" value="150" oninput="F_contourSpaceRange()">
+            <input type="text" id="contourSpaceText" value="150" onchange="F_contourSpaceText()"></td>
+        </tr>
+        <!--建筑着色-->
+        <tr>
+            <td class="titleText">建筑着色</td>
+        </tr>
+        <tr>
+            <td>
+                <select id="buildingRenderSelect" onchange="F_buildingRenderSelect()" style="height:20px">
+                <option value="null"></option>
+                <option value="按建筑类型着色">按建筑类型着色</option>
+                <option value="按指定位置的距离着色">按指定位置的距离着色</option>
+                <option value="交互着色">交互着色</option>
+                <option value="building属性为dormitory">building属性为dormitory</option>
+                </select>
+            </td>
+        </tr>
+        <!--日照分析-->
+        <tr>
+            <td class="titleText">日照分析</label></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="color:white">&emsp;日期&emsp;&emsp;&emsp;
+            <input type="text" id="dayText"  value="2025-6-10"></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="color:white">开始时间&emsp;&emsp;
+            <input type="text" id="startHourText"  value="0"><br></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="color:white">结束时间&emsp;&emsp;
+            <input type="text" id="stopHourText" value="24"></td>
+        </tr>
+        <tr>
+            <td style="color:white">日照速度&emsp;&emsp;&nbsp;<input type="text" id="sunSpeedText" value="1600" onchange="F_sunSpeedText()"></td>
+        </tr>
+        <tr>
+            <td><button id="sunButton" onclick="F_sunButton()" class="startOrStopButton">开始/结束</button></td>
+        </tr>
+        <!--淹没分析-->
+        <tr>
+            <td class="titleText">淹没分析&emsp;&emsp;
+            <button onclick="drawWaterRegion()" id="drawWaterButton" class="drawButton">绘制</button>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="color:white">最大高度&emsp;&emsp;
+            <input type="text" id="maxWaterHeightText" value="500"></td>
+        </tr>
+        <tr>
+            <td colspan="2" style="color:white">上涨速度&emsp;&emsp;
+            <input type="text" id="stepText" value="0.02"></td>
+        </tr>
+        <tr>
+            <td style="color:white">水位高度&emsp;&emsp;
+            <input text="text" id="waterHeightText" value="0" onchange="F_waterHeightText()"></td>
+        </tr>
+        <tr>
+            <td><button id="waterAnalysisButton" onclick="F_water()" class="startOrStopButton">开始/结束</button>&emsp;&nbsp;&nbsp;
+            <button onclick="F_zero()">水位归零</button></td>
+        </tr>
+        <!--通视分析-->
+        <tr>
+            <td class="titleText">通视分析&emsp;&emsp;
+            <button onclick="drawWatchPolyline()" id="watchButton" class="drawButton">绘制</button></td>
+        </tr>
+        <!--缓冲区分析-->
+        <tr>
+            <td class="titleText">缓冲区分析</td>
+        </tr>
+        <tr>
+            <td style="color:white">&emsp;范围&emsp;&emsp;&emsp;&nbsp;<input type="text" id="bufferSizeText" value=60 onchange="F_bufferSizeText()"></td>
+        </tr>
+        <tr>
+            <td style="color:white">类型选择&emsp;&emsp;
+                <select id="drawTypeSelect" onchange="F_drawTypeSelect()" style="width:170px;height:20px">
+                    <option value="undefined"></option>
+                    <option value="point">point</option>
+                    <option value="polyline">polyline</option>
+                    <option value="polygon">polygon</option>
+                </select>
+            </td>
+        </tr>
+        <!--坐标测量-->
+        <tr>
+            <td class="titleText">坐标测量&emsp;&emsp;
+            <button onclick="measureCoordinate()" id="measureCoordinateButton" class="drawButton">绘制</button></td>
+        </tr>
+        <!--距离测量-->
+        <tr>
+            <td class="titleText">距离测量&emsp;&emsp;
+            <button onclick="measureDistance()" id="measureDistanceButton" class="drawButton">绘制</button></td>
+        </tr>
+        <!--汽车移动-->
+        <tr>
+            <td class="titleText">汽车移动</td> 
+        </tr>
+        <tr>
+            <td><button onclick="carMove()" id="carMoveButton" class="startOrStopButton">开始/结束</button>&emsp;&emsp;
+            <button onclick="setViewCar()">定位</button></td>
+        </tr>
+    </table>
+    <table id="rightTable">
+        <tr>
+            <td><button onclick="F_savePictureButton()" style="background-color:aqua">&emsp;截图&emsp;</button></td>
+        </tr>
+        <tr>
+            <td><button onclick="F_setView()" style="background-color:aqua">&emsp;定位&emsp;</button></td>
+        </tr>
+        <tr>
+            <td><button onclick="F_mask()" id="maskButton" style="background-color:aqua">&emsp;遮罩&emsp;</button></td>
+        </tr>
+        <tr>
+            <td><button onclick="F_removeAllEntities()" style="background-color:red">&emsp;清空&emsp;</button></td>
+        </tr>
+    </table>
+    <script>
+        Cesium.Ion.defaultAccessToken='您的Token';
+        let viewer=new Cesium.Viewer("cesiumContainer",{
+            baseLayerPicker:false,
+            animation:false,
+            timeline:false,
+        });
+        let handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+        let openDraw=false,dymaticShape,activePositions=[],dymaticPositions;
+
+        let osmBuildingTile;
+        async function load()
+        {
+            viewer.scene.globe.enableLighting=true;
+            viewer.scene.globe.depthTestAgainstTerrain=true;
+            viewer.terrainProvider=await Cesium.createWorldTerrainAsync({requestVertexNormals:true});//坡度坡向设置：requestVertexNormals:true
+            osmBuildingTile=await Cesium.createOsmBuildingsAsync();
+            viewer.scene.primitives.add(osmBuildingTile);
+            viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(114.39564,30.52214,2000)});
+        }
+        load();
+    </script>
+    <script src="建筑渲染.js"></script>
+    <script src="等高线.js"></script>
+    <script src="坡度坡向.js"></script>
+    <script src="日照分析.js"></script>
+    <script src="淹没分析.js"></script>
+    <script src="通视分析.js"></script>
+    <script src="缓冲区分析.js"></script>
+    <script src="坐标测量.js"></script>
+    <script src="距离测量.js"></script>
+    <script src="汽车移动.js"></script>
+    <script src="截图定位清空.js"></script>
+    <script src="遮罩.js"></script>
+</body>
+</html>
