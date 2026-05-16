@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <link rel="stylesheet" href="./cesium/node_modules/cesium/Build/Cesium/Widgets/widgets.css">
+    <script src="./cesium/node_modules/cesium/Build/Cesium/Cesium.js"></script>
+    <link rel="icon" href="data:,">
+    <style>
+        html,body,#cesiumContainer{width:100%;height:100%;margin:0;padding:0;overflow:hidden}
+        .drawToolbar{position:absolute;top:10px;left:20px;width:200px;height:30px;background-color:white}
+        .exportBtn{position:absolute;top:10px;left:220px;width:100px;height:30px;background:red;color:white;border:none;cursor:pointer}
+        .adjustHeightDiv{position:absolute;top:50px;left:20px;width:200px;height:80px;background-color:rgba(0,0,0,0.6)}
+        .adjustRotationDiv{position:absolute;top:130px;left:20px;width:200px;height:220px;background-color:rgba(0,0,0,0.6)}
+        .adjustTranslationDiv{position:absolute;top:350px;left:20px;width:200px;height:150px;background-color:rgba(0,0,0,0.6)}
+        .adjustScaleDiv{position:absolute;top:500px;left:20px;width:200px;height:80px;background-color:rgba(0,0,0,0.6)}
+        .displayCoordinate{position:absolute;top:10px;left:750px;width:210px;height:30px;background-color:rgba(0,0,0,0.6)}
+        .displayMessage{position:absolute;top:600px;left:20px;width:100px;height:30px;background-color:rgba(0,0,0,0.6)}
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <!--绘制与保存-->
+    <div>
+        <select id="dropdown" class="drawToolbar" style="width:150px;height:30px" onchange="F_draw()">
+            <option value="null"></option>
+            <option value="drawPoint">绘制点</option>
+            <option value="drawModel">绘制模型</option>
+            <option value="drawLine">绘制线</option>
+            <option value="drawPolygon">绘制面</option>
+            <option value="drawRectangle">绘制矩形</option>
+            <option value="drawCircle">绘制圆</option>
+            <option value="delete">删除</option>
+        </select>
+        <button class="exportBtn" onclick="F_export()">导出数据</button>
+    </div>
+     <!--高度-->
+    <div class="adjustHeightDiv">
+        <label style="color:white">高度</label><br>
+        <input type="range" id="heightRange" min="-500" max="500" step="1" value="0" oninput="F_heightRange()">
+        <input type="text" id="heightText" value="0" onchange="F_heightText()"><br>
+    </div>
+    <!--旋转-->
+    <div class="adjustRotationDiv">
+        <label style="color:white">X轴旋转</label><br>
+        <input type="range" id="XRange" min="-100" max="100" value="0" step="1" oninput="F_rotationRange()">
+        <input type="text" id="XText" value="0" onchange="F_rotationText()"><br>
+        <label style="color:white">Y轴旋转</label><br>
+        <input type="range" id="YRange" min="-100" max="100" value="0" step="1" oninput="F_rotationRange()">
+        <input type="text" id="YText" value="0" onchange="F_rotationText()"><br>
+        <label style="color:white">Z轴旋转</label><br>
+        <input type="range" id="ZRange" min="-100" max="100" value="0" step="1" oninput="F_rotationRange()">
+        <input type="text" id="ZText" value="0" onchange="F_rotationText()"><br>
+    </div>
+    <!--平移-->
+    <div class="adjustTranslationDiv">
+        <label style="color:white">经度平移</label><br>
+        <input type="range" id="lonRange" min="-100" max="100" value="0" step="1" oninput="F_translationRange()">
+        <input type="text" id="lonText" value="0" onchange="F_translationText()"><br>
+        <label style="color:white">维度平移</label><br>
+        <input type="range" id="latRange" min="-100" max="100" value="0" step="1" oninput="F_translationRange()">
+        <input type="text" id="latText" value="0" onchange="F_translationText()"><br>
+    </div>
+    <!--缩放-->
+    <div class="adjustScaleDiv">
+        <label style="color:white">缩放</label><br>
+        <input type="range" id="scaleRange" min="0.1" max="10" step="0.01" value="1" oninput="F_scaleRange()">
+        <input type="text" id="scaleText" value="1" onchange="F_scaleText()">
+    </div>
+    <!--显示坐标-->
+    <div class="displayCoordinate">
+        <input type="text" id="coordinateText" value="0" style="width:200px">
+    </div>
+    <!--是否显示信息-->
+    <div class="displayMessage">
+        <button id="isShowMessageButton" style="width:100px;height:30px" onclick="F_displayMessage()">隐藏信息</button>
+    </div>
+    <script>
+        Cesium.Ion.defaultAccessToken='您的Token';
+        let viewer=new Cesium.Viewer('cesiumContainer',{
+            baseLayerPicker:false,
+            animation:false,
+            timeline:false,
+        });
+        viewer.scene.globe.depthTestAgainstTerrain=true;
+        let tileset,starCartographic,params,mStar;
+        async function F_Load()
+        {
+            viewer.terrainProvider=await Cesium.createWorldTerrainAsync();
+            tileset=await Cesium.Cesium3DTileset.fromUrl("./data/da_yan_ta/tileset.json");
+            viewer.scene.primitives.add(tileset);
+            viewer.zoomTo(tileset);
+            
+            starCartographic=Cesium.Cartographic.fromCartesian(tileset.boundingSphere.center);
+            params={
+            x:Cesium.Math.toDegrees(starCartographic.longitude),
+            y:Cesium.Math.toDegrees(starCartographic.latitude),
+            z:starCartographic.height
+            }
+            mStar=tileset._root.transform;
+            
+        }
+        F_Load();
+        let drawHandler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+        let coordinateHandler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+    </script>
+    <script src="./draw.js"></script>
+    <script src="./adjust.js"></script>
+    <script src="./coordinate.js"></script>
+    <script src="./message.js"></script>
+</body>
+</html>
