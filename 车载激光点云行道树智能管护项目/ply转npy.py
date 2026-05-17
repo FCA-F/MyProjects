@@ -4,10 +4,10 @@ import open3d as o3d
 from tqdm import tqdm
 
 # 路径与参数配置
-ROOT_DIR = r"E:\study\Cloud\树"  # 树木点云PLY文件根目录
+ROOT_DIR = r""  # 树木点云PLY文件根目录
 TREE_NAMES = ["木樨", "悬铃木", "雪松", "樟树", "紫薇树"]  # 类别名称，对应标签1、2、3、4、5
 # -------------------------------------------------------------------------
-SAVE_DIR = r"E:\study\Cloud\树_标准化样本"  # 标准化点云样本保存目录
+SAVE_DIR = r""  # 标准化点云样本保存目录
 TARGET_POINT_NUM = 1024  # 每个点云样本固定采样点数
 TRAIN_NUM_PER_CLASS = 35  # 单类别训练集样本数量
 VAL_NUM_PER_CLASS = 5  # 单类别验证集样本数量

@@ -1,6 +1,6 @@
 # ================================= 基础配置 =================================
 # PointNet++ 树种点云分类训练脚本
-# 硬件适配：RTX 5070 GPU | 数据策略：合并全量数据集随机划分
+# 硬件适配：RTX 5070 GPU | 数据策略：全量数据集按8:1:1划分为训练/验证/测试集
 # ============================================================================
 import os
 import warnings
@@ -9,40 +9,30 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, ConcatDataset, random_split
+from torch.utils.data import DataLoader, Dataset, random_split
 from tqdm import tqdm
 import multiprocessing
-# 混淆矩阵可视化依赖库
 from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+# 统一设置输出路径（你指定的文件夹）
+SAVE_DIR = r""
+os.makedirs(SAVE_DIR, exist_ok=True)  # 自动创建文件夹，不存在则新建
+
 # Windows系统多进程兼容配置
 multiprocessing.freeze_support()
-# 关闭冗余警告
 os.environ['KMP_WARNINGS'] = 'off'
-# GPU显存分配与卷积加速优化
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 torch.backends.cudnn.benchmark = True
-# 抑制RTX 5070算力兼容警告
 warnings.filterwarnings('ignore',
                         message='NVIDIA GeForce RTX 5070 Laptop GPU with CUDA capability sm_120 is not compatible with the current PyTorch installation.')
-# Matplotlib中文与负号显示配置
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 
 # -------------------------- PointNet++ 核心模块实现 --------------------------
 def square_distance(src, dst):
-    """
-    计算两组点云之间的欧氏距离平方
-    用于Set Abstraction层的局部区域搜索
-    Args:
-        src: 源点云 (B, N, C)
-        dst: 目标点云 (B, M, C)
-    Returns:
-        距离矩阵 (B, N, M)
-    """
     B, N, _ = src.shape
     _, M, _ = dst.shape
     dist = -2 * torch.matmul(src, dst.permute(0, 2, 1))
@@ -52,14 +42,6 @@ def square_distance(src, dst):
 
 
 def index_points(points, idx):
-    """
-    根据索引批量提取点云数据
-    Args:
-        points: 原始点云 (B, N, C)
-        idx: 采样索引 (B, S)
-    Returns:
-        提取后的点云 (B, S, C)
-    """
     device = points.device
     B = points.shape[0]
     view_shape = list(idx.shape)
@@ -72,14 +54,6 @@ def index_points(points, idx):
 
 
 def farthest_point_sample(xyz, npoint):
-    """
-    最远点采样(FPS)：均匀采样点云关键点
-    Args:
-        xyz: 点云坐标 (B, N, 3)
-        npoint: 采样点数
-    Returns:
-        采样点索引 (B, npoint)
-    """
     device = xyz.device
     B, N, C = xyz.shape
     centroids = torch.zeros(B, npoint, dtype=torch.long).to(device)
@@ -97,16 +71,6 @@ def farthest_point_sample(xyz, npoint):
 
 
 def query_ball_point(radius, nsample, xyz, new_xyz):
-    """
-    球查询：提取指定半径内的局部点云邻域
-    Args:
-        radius: 搜索半径
-        nsample: 邻域最大采样数
-        xyz: 原始点云
-        new_xyz: 采样中心点
-    Returns:
-        邻域点索引
-    """
     device = xyz.device
     B, N, C = xyz.shape
     _, M, _ = new_xyz.shape
@@ -121,10 +85,6 @@ def query_ball_point(radius, nsample, xyz, new_xyz):
 
 
 class PointNetSetAbstraction(nn.Module):
-    """
-    PointNet++ 核心Set Abstraction层
-    实现点云的分层采样、特征提取与聚合
-    """
     def __init__(self, npoint, radius, nsample, in_channel, mlp, group_all):
         super(PointNetSetAbstraction, self).__init__()
         self.npoint = npoint
@@ -141,7 +101,6 @@ class PointNetSetAbstraction(nn.Module):
 
     def forward(self, xyz, points):
         B, N, C = xyz.shape
-        B, N, D = points.shape
         if not self.group_all:
             fps_idx = farthest_point_sample(xyz, self.npoint)
             new_xyz = index_points(xyz, fps_idx)
@@ -160,10 +119,6 @@ class PointNetSetAbstraction(nn.Module):
 
 
 class PointNet2Cls(nn.Module):
-    """
-    PointNet++ 点云分类模型
-    适配5类树种分类任务，集成Dropout防止过拟合
-    """
     def __init__(self, num_class=5):
         super(PointNet2Cls, self).__init__()
         self.sa1 = PointNetSetAbstraction(512, 0.2, 32, 6, [64, 64, 128], group_all=False)
@@ -195,16 +150,11 @@ class PointNet2Cls(nn.Module):
 
 # -------------------------- 点云数据集加载器 --------------------------
 class TreePointCloudDataset(Dataset):
-    """
-    树种点云数据集加载类
-    支持全量数据合并加载，训练集自动执行数据增强
-    """
     def __init__(self, root_dir, split="all"):
         super(TreePointCloudDataset, self).__init__()
         self.root_dir = root_dir
-        self.split = split  # all:加载全部数据 train/val:区分数据增强
+        self.split = split
 
-        # 读取所有划分的标签文件
         self.file_to_label = {}
         for split_name in ["train", "val", "test"]:
             label_path = os.path.join(root_dir, f"{split_name}_labels.txt")
@@ -215,9 +165,8 @@ class TreePointCloudDataset(Dataset):
                         if not line:
                             continue
                         filename, label = line.split("\t")
-                        self.file_to_label[filename] = int(label) - 1  # 标签映射：1-5 → 0-4
+                        self.file_to_label[filename] = int(label) - 1
 
-        # 收集所有有效样本文件
         self.sample_files = []
         for split_name in ["train", "val", "test"]:
             sample_dir = os.path.join(root_dir, split_name)
@@ -227,54 +176,31 @@ class TreePointCloudDataset(Dataset):
                         self.sample_files.append((split_name, f))
 
     def __getitem__(self, idx):
-        """加载单样本点云数据，训练集执行数据增强"""
         split_name, filename = self.sample_files[idx]
         sample_dir = os.path.join(self.root_dir, split_name)
         pc = np.load(os.path.join(sample_dir, filename))
         original_num_points = pc.shape[0]
 
-        # 训练集数据增强策略
         if self.split == "train":
-            # 1. 随机旋转（Y轴±45°）
             angle = np.random.uniform(-np.pi / 4, np.pi / 4)
-            rotation_matrix = np.array([
-                [np.cos(angle), 0, np.sin(angle)],
-                [0, 1, 0],
-                [-np.sin(angle), 0, np.cos(angle)]
-            ], dtype=np.float32)
+            rotation_matrix = np.array([[np.cos(angle), 0, np.sin(angle)],[0, 1, 0],[-np.sin(angle), 0, np.cos(angle)]], dtype=np.float32)
             pc = pc @ rotation_matrix
-
-            # 2. 随机缩放
             scale = np.random.uniform(0.7, 1.3)
             pc = pc * scale
-
-            # 3. 高斯噪声
             noise = np.random.normal(0, 0.008, pc.shape).astype(np.float32)
             pc = pc + noise
-
-            # 4. 随机平移
             translation = np.random.uniform(-0.1, 0.1, size=(1, 3)).astype(np.float32)
             pc = pc + translation
-
-            # 5. 随机点丢弃与重采样
             drop_ratio = np.random.uniform(0.05, 0.1)
             keep_num = int(original_num_points * (1 - drop_ratio))
             drop_idx = np.random.choice(pc.shape[0], keep_num, replace=False)
             pc = pc[drop_idx]
-            # 固定输出点数为1024
             if pc.shape[0] < original_num_points:
                 add_idx = np.random.choice(pc.shape[0], original_num_points - pc.shape[0], replace=True)
                 pc = np.concatenate([pc, pc[add_idx]], axis=0)
-            elif pc.shape[0] > original_num_points:
-                pc = pc[np.random.choice(pc.shape[0], original_num_points, replace=False)]
+            if np.random.rand() > 0.5: pc[:, 0] = -pc[:, 0]
+            if np.random.rand() > 0.5: pc[:, 1] = -pc[:, 1]
 
-            # 6. 随机轴翻转
-            if np.random.rand() > 0.5:
-                pc[:, 0] = -pc[:, 0]
-            if np.random.rand() > 0.5:
-                pc[:, 1] = -pc[:, 1]
-
-        # 维度转换：(1024,3) → (3,1024)
         pc_tensor = torch.from_numpy(pc).float().permute(1, 0)
         label_tensor = torch.tensor(self.file_to_label[filename], dtype=torch.long)
         return pc_tensor, label_tensor
@@ -283,12 +209,8 @@ class TreePointCloudDataset(Dataset):
         return len(self.sample_files)
 
 
-# -------------------------- 训练与验证函数 --------------------------
+# -------------------------- 训练/验证/测试函数 --------------------------
 def train_one_epoch(model, loader, criterion, optimizer, device):
-    """
-    单轮训练函数
-    Returns: 平均损失, 准确率
-    """
     model.train()
     total_loss = 0.0
     correct = 0
@@ -296,30 +218,20 @@ def train_one_epoch(model, loader, criterion, optimizer, device):
     for pc_batch, label_batch in tqdm(loader, desc="Training", ncols=80):
         pc_batch = pc_batch.to(device, non_blocking=True)
         label_batch = label_batch.to(device, non_blocking=True)
-
         optimizer.zero_grad()
         outputs = model(pc_batch)
         loss = criterion(outputs, label_batch)
         loss.backward()
-        # 梯度裁剪，防止梯度爆炸
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-
         total_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
         total += label_batch.size(0)
         correct += (predicted == label_batch).sum().item()
-
-    avg_loss = total_loss / len(loader)
-    accuracy = 100 * correct / total
-    return avg_loss, accuracy
+    return total_loss / len(loader), 100 * correct / total
 
 
 def validate(model, loader, criterion, device):
-    """
-    模型验证函数
-    Returns: 平均损失, 准确率
-    """
     model.eval()
     total_loss = 0.0
     correct = 0
@@ -328,25 +240,35 @@ def validate(model, loader, criterion, device):
         for pc_batch, label_batch in tqdm(loader, desc="Validating", ncols=80):
             pc_batch = pc_batch.to(device, non_blocking=True)
             label_batch = label_batch.to(device, non_blocking=True)
-
             outputs = model(pc_batch)
             loss = criterion(outputs, label_batch)
-
             total_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             total += label_batch.size(0)
             correct += (predicted == label_batch).sum().item()
+    return total_loss / len(loader), 100 * correct / total
 
-    avg_loss = total_loss / len(loader)
-    accuracy = 100 * correct / total
-    return avg_loss, accuracy
+
+def test_model(model, loader, criterion, device):
+    model.eval()
+    total_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for pc_batch, label_batch in tqdm(loader, desc="Testing", ncols=80):
+            pc_batch = pc_batch.to(device, non_blocking=True)
+            label_batch = label_batch.to(device, non_blocking=True)
+            outputs = model(pc_batch)
+            loss = criterion(outputs, label_batch)
+            total_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            total += label_batch.size(0)
+            correct += (predicted == label_batch).sum().item()
+    return total_loss / len(loader), 100 * correct / total
 
 
 # -------------------------- 混淆矩阵可视化 --------------------------
-def plot_confusion_matrix(model, loader, device, class_names):
-    """
-    生成并保存分类混淆矩阵，分析类别混淆情况
-    """
+def plot_confusion_matrix(model, loader, device, class_names, save_path):
     model.eval()
     all_preds = []
     all_labels = []
@@ -358,113 +280,98 @@ def plot_confusion_matrix(model, loader, device, class_names):
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(label_batch.numpy())
 
-    # 计算混淆矩阵
     cm = confusion_matrix(all_labels, all_preds)
-    # 可视化绘图
     plt.figure(figsize=(8, 6))
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                xticklabels=class_names, yticklabels=class_names)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
     plt.xlabel('Predicted Class')
     plt.ylabel('True Class')
-    plt.title('Tree Species Classification Confusion Matrix')
+    plt.title('Tree Species Classification Confusion Matrix (Test Set)')
     plt.tight_layout()
-    plt.savefig('confusion_matrix_merged.png')
+    plt.savefig(save_path)
     plt.show()
 
-    # 输出各类别识别准确率
     class_acc = 100 * cm.diagonal() / cm.sum(axis=1)
-    print("\n各类别识别准确率：")
+    print("\n测试集各类别识别准确率：")
     for i, cls in enumerate(class_names):
         print(f"{cls}：{class_acc[i]:.2f}%")
 
 
 # -------------------------- 主训练流程 --------------------------
 if __name__ == '__main__':
-    # 数据集根目录（请根据实际路径修改）
-    ROOT_DIR = r"E:\study\Cloud\树_标准化样本"
-
-    # 训练超参数配置
+    ROOT_DIR = r""
     BATCH_SIZE = 16
     NUM_EPOCHS = 200
     LEARNING_RATE = 0.001
     WEIGHT_DECAY = 5e-4
-    TRAIN_RATIO = 0.9
+    TRAIN_RATIO, VAL_RATIO, TEST_RATIO = 0.8, 0.1, 0.1
     early_stopping_patience = 15
 
-    # 设备配置
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if torch.cuda.is_available():
         print(f"训练设备：{device} | GPU型号：{torch.cuda.get_device_name(0)}")
-        print(f"显存优化配置：batch_size=16，启用可扩展显存分配")
-    else:
-        print("未检测到CUDA设备，将使用CPU进行训练")
 
-
-    # 加载全量数据集
+    # 加载数据集
     full_dataset = TreePointCloudDataset(ROOT_DIR, split="all")
     total_size = len(full_dataset)
-    train_size = int(TRAIN_RATIO * total_size)
-    val_size = total_size - train_size
-    # 随机划分训练/验证集
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
-    train_dataset.dataset.split = "train"
-    val_dataset.dataset.split = "val"
+    train_size, val_size = int(total_size*TRAIN_RATIO), int(total_size*VAL_RATIO)
+    test_size = total_size - train_size - val_size
+    train_dataset, val_dataset, test_dataset = random_split(full_dataset, [train_size, val_size, test_size])
+    train_dataset.dataset.split, val_dataset.dataset.split, test_dataset.dataset.split = "train", "val", "test"
 
     # 数据加载器
-    train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
+    train_loader = DataLoader(train_dataset, BATCH_SIZE, shuffle=True, num_workers=2, pin_memory=True)
+    val_loader = DataLoader(val_dataset, BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
+    test_loader = DataLoader(test_dataset, BATCH_SIZE, shuffle=False, num_workers=2, pin_memory=True)
 
-    # 数据集信息打印
-    print(f"\n数据集规模：总样本={total_size} | 训练集={train_size} | 验证集={val_size}")
-    print(f"训练参数：总轮数={NUM_EPOCHS} | 批次大小={BATCH_SIZE} | 早停阈值={early_stopping_patience}")
-    print("=" * 60)
+    print(f"\n数据集规模：总样本={total_size} | 训练={train_size} | 验证={val_size} | 测试={test_size}")
+    print("="*60)
 
     # 模型初始化
-    model = PointNet2Cls(num_class=5).to(device)#调整数目
+    model = PointNet2Cls(num_class=5).to(device)
     criterion = nn.NLLLoss()
     optimizer = optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=5)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', 0.5, 5)
 
-    # 训练状态初始化
     best_val_acc = 0.0
     early_stopping_counter = 0
+    # 模型保存路径（指定文件夹）
+    MODEL_PATH = os.path.join(SAVE_DIR, "pointnet2_tree_best.pth")
 
-    # 主训练循环
+    # 训练循环
     for epoch in range(NUM_EPOCHS):
-        print(f"\n[Epoch {epoch + 1}/{NUM_EPOCHS}]")
-        # 训练阶段
+        print(f"\n[Epoch {epoch+1}/{NUM_EPOCHS}]")
         train_loss, train_acc = train_one_epoch(model, train_loader, criterion, optimizer, device)
-        # 验证阶段
-        val_loss, val_acc = validate(model, val_loader, criterion, optimizer, device)
-        # 学习率调整
+        val_loss, val_acc = validate(model, val_loader, criterion, device)
         scheduler.step(val_acc)
 
-        # 打印训练指标
         print(f"训练集：损失={train_loss:.4f} | 准确率={train_acc:.2f}%")
         print(f"验证集：损失={val_loss:.4f} | 准确率={val_acc:.2f}%")
 
-        # 最优模型保存与早停判断
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), "pointnet2_tree_merged.pth")
-            print(f"模型已更新：当前最优验证准确率={best_val_acc:.2f}%")
+            torch.save(model.state_dict(), MODEL_PATH)
+            print(f"模型已保存至：{MODEL_PATH}")
             early_stopping_counter = 0
         else:
             early_stopping_counter += 1
             print(f"早停计数：{early_stopping_counter}/{early_stopping_patience}")
             if early_stopping_counter >= early_stopping_patience:
-                print(f"\n训练终止：连续{early_stopping_patience}轮验证集无性能提升")
+                print(f"\n训练终止：连续{early_stopping_patience}轮无提升")
                 break
-        print("-" * 60)
+        print("-"*60)
 
-    # 训练结果总结
-    print(f"\n训练完成 | 最高验证准确率：{best_val_acc:.2f}%")
-    # 生成混淆矩阵
-    print("\n正在生成混淆矩阵...")
+    # 测试集评估
+    print(f"\n训练完成 | 最优验证准确率：{best_val_acc:.2f}%")
+    model.load_state_dict(torch.load(MODEL_PATH))
+    test_loss, test_acc = test_model(model, test_loader, criterion, device)
+    print(f"\n最终测试集性能：损失={test_loss:.4f} | 准确率={test_acc:.2f}%")
+
+    # 🔥 混淆矩阵保存路径（指定文件夹）
+    CM_PATH = os.path.join(SAVE_DIR, "混淆矩阵.png")
+    print(f"\n正在生成混淆矩阵，保存至：{CM_PATH}")
     class_names = ["木樨", "悬铃木", "雪松", "樟树", "紫薇树"]
-    plot_confusion_matrix(model, val_loader, device, class_names)
+    plot_confusion_matrix(model, test_loader, device, class_names, CM_PATH)
 
-    # 最终输出
-    print("\n训练任务全部完成")
-    print(f"最优模型路径：pointnet2_tree_merged.pth")
-    print(f"混淆矩阵路径：confusion_matrix_merged.png")
+    print("\n全部任务完成！")
+    print(f"最优模型：{MODEL_PATH}")
+    print(f"混淆矩阵：{CM_PATH}")
