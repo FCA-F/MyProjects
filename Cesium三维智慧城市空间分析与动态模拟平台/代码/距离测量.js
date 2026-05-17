@@ -12,7 +12,7 @@ function measureDistance()
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        distancePositions=[],distance=0,activePositions=[],dymaticShape=undefined,dymaticPositions=undefined,openDraw=false;
+        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,openDraw=false;
 
         //采点
         handler.setInputAction(function (event){
@@ -27,8 +27,8 @@ function measureDistance()
             //线
             openDraw=true;
             activePositions.push(pickPosition);
-            let dymaticPositions=new Cesium.CallbackProperty(function (){return activePositions},false);
-            dymaticShape=drawDistanceLine(dymaticPositions);
+            let dynamicPositions=new Cesium.CallbackProperty(function (){return activePositions},false);
+            dynamicShape=drawDistanceLine(dynamicPositions);
         }
         else
         {
@@ -53,12 +53,12 @@ function measureDistance()
         handler.setInputAction(function (event){
             activePositions.pop();
             drawDistanceLine(activePositions);
-            viewer.entities.remove(dymaticShape);
+            viewer.entities.remove(dynamicShape);
             openDraw=false;
             distance=0;
             distancePositions=[];
             activePositions=[];
-            dymaticShape=undefined;
+            dynamicShape=undefined;
         },Cesium.ScreenSpaceEventType.RIGHT_CLICK)
     }
     else
@@ -69,7 +69,7 @@ function measureDistance()
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        distancePositions=[],distance=0,activePositions=[],dymaticShape=undefined,dymaticPositions=undefined,openDraw=false;
+        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,openDraw=false;
     }
 }
     

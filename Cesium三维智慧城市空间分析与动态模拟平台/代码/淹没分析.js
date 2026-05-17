@@ -15,7 +15,7 @@ function drawWaterRegion()
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        dymaticShape=undefined,openDraw=false,activePositions=[];//动态点坐标
+        dynamicShape=undefined,openDraw=false,activePositions=[];//动态点坐标
 
         //采点(左键)
         handler.setInputAction(function (event){
@@ -26,9 +26,9 @@ function drawWaterRegion()
             {
                 openDraw=true;
                 activePositions.push(pickPosition);
-                let dymaticPositions=new Cesium.CallbackProperty(
+                let dynamicPositions=new Cesium.CallbackProperty(
                     function (){return new Cesium.PolygonHierarchy(activePositions)},false);
-                dymaticShape=drawPolygon(dymaticPositions);
+                dynamicShape=drawPolygon(dynamicPositions);
             }
             else
             {
@@ -51,11 +51,11 @@ function drawWaterRegion()
         //确认，终止（右键）
         handler.setInputAction(function (event){
             activePositions.pop();
-            viewer.entities.remove(dymaticShape);
+            viewer.entities.remove(dynamicShape);
             drawWaterPolygon(activePositions);
             openDraw=false;
             activePositions=[];
-            dymaticShape=undefined;
+            dynamicShape=undefined;
         },Cesium.ScreenSpaceEventType.RIGHT_CLICK);
     }
     else
@@ -66,7 +66,7 @@ function drawWaterRegion()
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        dymaticShape=undefined,openDraw=false,activePositions=[];//保险
+        dynamicShape=undefined,openDraw=false,activePositions=[];//保险
     }
 }
     

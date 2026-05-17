@@ -5,7 +5,7 @@ let bufferSize=Number(bufferSizeText.value);
 
 function F_drawTypeSelect()
 {
-    openDraw=false,dymaticShape=undefined,activePositions=[],dymaticPositions=undefined;
+    openDraw=false,dynamicShape=undefined,activePositions=[],dynamicPositions=undefined;
     drawType=drawTypeSelect.value;
     //按钮着色
     if(drawType!='undefined')
@@ -29,11 +29,11 @@ function F_drawTypeSelect()
         {
             openDraw=true;
             activePositions.push(pickPosition);
-            dymaticPositions=new Cesium.CallbackProperty(function (){
+            dynamicPositions=new Cesium.CallbackProperty(function (){
                 if(drawType=='polygon'){return new Cesium.PolygonHierarchy(activePositions)}
                 else{return activePositions};
             },false);
-            dymaticShape=drawShape(dymaticPositions);
+            dynamicShape=drawShape(dynamicPositions);
         }
         else
         {
@@ -54,7 +54,7 @@ function F_drawTypeSelect()
 
     handler.setInputAction(function (event){
         activePositions.pop();
-        viewer.entities.remove(dymaticShape);
+        viewer.entities.remove(dynamicShape);
         if(activePositions.length)
         {
             if(drawType=='polygon')
@@ -64,8 +64,8 @@ function F_drawTypeSelect()
         }
         drawBuffer(activePositions);
         openDraw=false;
-        dymaticPositions=undefined;
-        dymaticShape=undefined;
+        dynamicPositions=undefined;
+        dynamicShape=undefined;
         activePositions=[];
     },Cesium.ScreenSpaceEventType.RIGHT_CLICK)
 }
