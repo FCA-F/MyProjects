@@ -1,102 +1,44 @@
-let floatingPoint,activeShape,drawingMode;//初始点，运动图形，画模型种类
-let activeShapePoints=[],dynamicPositions=[],tempPoints=[];//运动点集，运动点集（Callbackproperty）,临时点集
+<template>
+    <div class="drawToolbar">
+        <select v-model="drawingMode" style="width:150px;height:30px">
+        <option value=""></option>
+        <option value="point">绘制点</option>
+        <option value="model">绘制模型</option>
+        <option value="line">绘制线</option>
+        <option value="polygon">绘制面</option>
+        <option value="rectangle">绘制矩形</option>
+        <option value="circle">绘制圆</option>
+        <option value="delete">删除</option>
+        </select>
+        <button class="exportBtn" @click="exportEntities()">导出数据</button>
+    </div>
+</template>
 
-//鼠标左击事件
-drawHandler.setInputAction(function(event)
-{
-    let earthPosition=viewer.scene.pickPosition(event.position);
-    if(drawingMode=='point'){F_drawPoint(earthPosition)}
-    else if(drawingMode=='model'){F_drawModel(earthPosition)}
-    else if(drawingMode=='line'||drawingMode=='polygon'||drawingMode=='circle'||drawingMode=='rectangle')
-    {
-        if(Cesium.defined(earthPosition)&&activeShapePoints.length===0)//第一次点击
-        {
-            floatingPoint=F_drawPoint(earthPosition);
-            activeShapePoints.push(earthPosition);
-            dynamicPositions=new Cesium.CallbackProperty(function()
-            {
-                if(drawingMode==='polygon')
-                return new Cesium.PolygonHierarchy(activeShapePoints);
-                else
-                return activeShapePoints;
-            },false)
-            activeShape=F_drawShape(dynamicPositions)
-        }
-        else
-        {
-            activeShapePoints.push(earthPosition)
-            tempPoints.push(F_drawPoint(earthPosition))
-        }
-    }
-    else if(drawingMode=='delete')
-    {
-        let obj=viewer.scene.pick(event.position);
-        if(Cesium.defined(obj)&&Cesium.defined(obj.id))
-            viewer.entities.remove(obj.id);
-    }
-},Cesium.ScreenSpaceEventType.LEFT_CLICK)
+<script setup>
+import * as Cesium from 'cesium'
+import {ref,watch,onMounted,onUnmounted} from 'vue'
 
-//鼠标移动事件
-drawHandler.setInputAction(function(event)
-{
-    if(Cesium.defined(floatingPoint))
-    {
-        let newPosition=viewer.scene.pickPosition(event.endPosition)
-        if(Cesium.defined(newPosition))
-        {
-            if(activeShapePoints.length>1)
-            activeShapePoints.pop();
-            activeShapePoints.push(newPosition);
-        }
-    }
-},Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+const props=defineProps({
+    viewer:{type:Object,required:true}
+})
 
-//鼠标右击事件
-drawHandler.setInputAction(function(event)
-{
-    activeShapePoints.pop();
-    if(activeShapePoints.length)
-    F_drawShape(activeShapePoints)
-    viewer.entities.remove(floatingPoint);
-    viewer.entities.remove(activeShape);
-    tempPoints.forEach(point=>viewer.entities.remove(point))
-    floatingPoint=undefined;
-    activeShape=undefined;
-    activeShapePoints=[];
-},Cesium.ScreenSpaceEventType.RIGHT_CLICK)
+const viewer=props.viewer;
 
-//定义下拉函数
-let dropdown=document.getElementById('dropdown');
-function F_draw()
-{
-    switch(dropdown.value)
-    {
-        case 'null':
-            drawingMode=null;break;
-        case 'drawPoint': 
-            drawingMode='point';break;
-        case 'drawModel':
-            drawingMode='model';break;
-        case 'drawLine':
-            drawingMode='line';break;
-        case 'drawPolygon':
-            drawingMode='polygon';break;
-        case 'drawRectangle':
-            drawingMode='rectangle';break;
-        case 'drawCircle':
-            drawingMode='circle';break;
-        case 'delete':
-            drawingMode='delete';break;
-        default:break;
-    }
-}
+const drawingMode=ref(undefined)
+
+let openDraw=false
+let dynamicShape=undefined
+let activeShapePoints=[]
+let dynamicPositions=undefined
+let tempPoints=[]
+let handler=null
 
 //绘制点
-function F_drawPoint(positionData)
+const drawPoint=(position)=>
 {
     let shape=viewer.entities.add(
         {
-            position:positionData,
+            position:position,
             point:{
                 color:Cesium.Color.BLUE,
                 pixelSize:12
@@ -106,13 +48,13 @@ function F_drawPoint(positionData)
     return shape;
 }
 //绘制模型
-function F_drawModel(positionData)
+const drawModel=(position)=>
 {
     let shape=viewer.entities.add(
         {
-            position:positionData,
+            position:position,
             model:{
-                uri:'./data/glTF/car/scene.gltf',
+                uri:'/data/glTF/car/scene.gltf',
                 scale:10
             }
         }
@@ -120,16 +62,16 @@ function F_drawModel(positionData)
     return shape;
 }
 //绘制线和面
-function F_drawShape(positionData)
+const drawShape=(position)=>
 {
     let shape;
     //线
-    if(drawingMode==='line')
+    if(drawingMode.value==='line')
     {
         shape=viewer.entities.add(
             {
                 polyline:{
-                    positions:positionData,
+                    positions:position,
                     width:5,
                     material:new Cesium.PolylineGlowMaterialProperty({color:Cesium.Color.RED}),
                     clampToGround:true
@@ -138,48 +80,50 @@ function F_drawShape(positionData)
         )
     }
     //面
-    else if(drawingMode==='polygon')
+    else if(drawingMode.value==='polygon')
     {
         shape=viewer.entities.add(
             {
                 polygon:{
-                    hierarchy:positionData,
+                    hierarchy:position,
                     material:Cesium.Color.RED,
                 }
             }
         )
     }
     //矩形
-    else if(drawingMode==='rectangle')
+    else if(drawingMode.value==='rectangle')
     {
-        let arr=typeof positionData.getValue==='function'?positionData.getValue(0):positionData;
+        let arr=typeof position.getValue==='function'?position.getValue(0):position;
         shape=viewer.entities.add(
             {
                 rectangle:{
-                    coordinates:new Cesium.CallbackProperty(function()
+                    coordinates:new Cesium.CallbackProperty(()=>
                     {
                         return Cesium.Rectangle.fromCartesianArray(arr);
-                    }),
+                    },false),
                     material:Cesium.Color.RED
                 }
             }
         )
     }
     //圆
-    else if(drawingMode==='circle')
+    else if(drawingMode.value==='circle')
     {
-        let arr=typeof positionData.getValue==='function'?positionData.getValue(0):positionData;
+        let arr=typeof position.getValue==='function'?position.getValue(0):position;
         shape=viewer.entities.add(
             {
                 position:activeShapePoints[0],
                 ellipse:{
-                    semiMinorAxis:new Cesium.CallbackProperty(function()
+                    semiMinorAxis:new Cesium.CallbackProperty(()=>
                     {
-                        return Cesium.Cartesian3.distance(arr[0],arr[arr.length-1])
+                        let distance=Cesium.Cartesian3.distance(arr[0],arr[arr.length-1]);
+                        return Math.max(distance,1e-8);//若只有一个点，距离为0会报错
                     },false),
-                    semiMajorAxis:new Cesium.CallbackProperty(function()
+                    semiMajorAxis:new Cesium.CallbackProperty(()=>
                     {
-                        return Cesium.Cartesian3.distance(arr[0],arr[arr.length-1])
+                        let distance=Cesium.Cartesian3.distance(arr[0],arr[arr.length-1]);
+                        return Math.max(distance,1e-8);
                     },false),
                     material:Cesium.Color.RED
                 }
@@ -188,9 +132,88 @@ function F_drawShape(positionData)
     }
     return shape;
 }
+onMounted(() => {
+  handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+  handler.setInputAction((event)=>
+  {
+      let position=viewer.scene.pickPosition(event.position);
+      if(!Cesium.defined(position))
+      return;
+      if(drawingMode.value=='point'){drawPoint(position)}
+      else if(drawingMode.value=='model'){drawModel(position)}
+      else if(drawingMode.value=='line'||drawingMode.value=='polygon'||drawingMode.value=='circle'||drawingMode.value=='rectangle')
+      {
+            if(!openDraw)//第一次点击
+            {
+                openDraw=true;
+                activeShapePoints.push(position);
+                dynamicPositions=new Cesium.CallbackProperty(()=>
+                {
+                    if(drawingMode.value==='polygon')
+                    return new Cesium.PolygonHierarchy(activeShapePoints);
+                    else
+                    return activeShapePoints;
+                },false)
+                dynamicShape=drawShape(dynamicPositions)
+            }
+            else
+            {
+                activeShapePoints.push(position)
+                tempPoints.push(drawPoint(position))
+            }
+        }
+        else if(drawingMode.value=='delete')
+        {
+            let obj=viewer.scene.pick(event.position);
+            if(Cesium.defined(obj)&&Cesium.defined(obj.id))
+                viewer.entities.remove(obj.id);
+        }
+  },Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
-//圆形坐标生成工具
-function generateCircleCoordinates(centerCartographic,radius,steps=64) {
+  //鼠标移动事件
+  handler.setInputAction((event)=>
+  {
+        if(!openDraw)
+        return;
+        let position=viewer.scene.pickPosition(event.endPosition)
+        if(Cesium.defined(position))
+        {
+            if(activeShapePoints.length>1)
+            activeShapePoints.pop();
+            activeShapePoints.push(position);
+        }
+  },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
+
+  //鼠标右击事件
+  handler.setInputAction((event)=>
+  {
+        openDraw=false;
+        activeShapePoints.pop();
+        if(activeShapePoints.length)
+        drawShape(activeShapePoints)
+        viewer.entities.remove(dynamicShape);
+        tempPoints.forEach(point=>viewer.entities.remove(point))
+        tempPoints=[];
+        dynamicShape=undefined;
+        activeShapePoints=[];
+  },Cesium.ScreenSpaceEventType.RIGHT_CLICK)
+});
+//防止切换报错
+watch(drawingMode,()=>{
+    if(Cesium.defined(dynamicShape))
+    viewer.entities.remove(dynamicShape);
+    openDraw=false
+    dynamicShape=undefined
+    activeShapePoints=[]
+    dynamicPositions=undefined
+    tempPoints=[]
+})
+
+onUnmounted(()=>{
+  handler.destroy()
+})
+
+function generateCircleCoordinates(centerCartographic,radius,steps=64){
     const coords=[];
     const lon=Cesium.Math.toDegrees(centerCartographic.longitude);
     const lat=Cesium.Math.toDegrees(centerCartographic.latitude);
@@ -210,7 +233,7 @@ function generateCircleCoordinates(centerCartographic,radius,steps=64) {
 }
 
 //导出函数
-function F_export(){
+const exportEntities=()=>{
     let features=[];
     let entities=viewer.entities.values;
     let now=Cesium.JulianDate.now();
@@ -307,3 +330,10 @@ function F_export(){
     URL.revokeObjectURL(url);
     alert("导出成功！");
 }
+
+</script>
+  
+<style scoped>
+  .drawToolbar{position:absolute;top:10px;left:20px;}
+  .exportBtn{position:absolute;top:10px;left:220px;width:100px;height:30px;background:red;color:white;border:none;cursor:pointer}
+</style>
