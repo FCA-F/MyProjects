@@ -1,21 +1,36 @@
-let distancePositions=[],distance=0;//计算距离数组，当前距离
+<template>
+    <div class="toorbal">
+        <div class="row">
+            <label class="oneText">距离测量</label>
+            <button @click="measureDistance()" :class="['drawBtn',isDraw?'red':'']" >绘制</button>
+        </div>
+    </div>
+</template>
+<script setup>
+import * as Cesium from 'cesium'
+import {ref,onMounted,onUnmounted} from 'vue'
 
-let measureDistanceButton=document.getElementById('measureDistanceButton');
-let ismeasureDistance=false;
+const props=defineProps({viewer:{type:Object,required:true}});
+const viewer=props.viewer;
 
-function measureDistance()
+const isDraw=ref(false);
+let isMouse=false;
+let handler;
+
+onMounted(()=>{
+    handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+})
+
+
+const measureDistance=()=>
 {
-    if(!ismeasureDistance)
+    let distancePositions=[],distance=0,activePositions=[],dynamicShape,dynamicPositions;
+    if(!isDraw.value)
     {
-        ismeasureDistance=true;
-        measureDistanceButton.style.backgroundColor='red';
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,openDraw=false;
+        isDraw.value=true;
 
         //采点
-        handler.setInputAction(function (event){
+        handler.setInputAction((event)=>{
         let pickPosition=viewer.scene.pickPosition(event.position);
         if(!Cesium.defined(pickPosition))
         return;
@@ -25,9 +40,9 @@ function measureDistance()
             distancePositions.push(pickPosition);
             drawDistanceLable(pickPosition,0);
             //线
-            openDraw=true;
+            isMouse=true;
             activePositions.push(pickPosition);
-            let dynamicPositions=new Cesium.CallbackProperty(function (){return activePositions},false);
+            let dynamicPositions=new Cesium.CallbackProperty(()=>{return activePositions},false);
             dynamicShape=drawDistanceLine(dynamicPositions);
         }
         else
@@ -39,8 +54,8 @@ function measureDistance()
         }
         },Cesium.ScreenSpaceEventType.LEFT_CLICK);
         //追踪
-        handler.setInputAction(function (event){
-            if(!openDraw)
+        handler.setInputAction((event)=>{
+            if(!isMouse)
             return;
             let pickPosition=viewer.scene.pickPosition(event.endPosition);
             if(!Cesium.defined(pickPosition))
@@ -50,11 +65,11 @@ function measureDistance()
             activePositions.push(pickPosition);
         },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
         //确认图形，结束
-        handler.setInputAction(function (event){
+        handler.setInputAction((event)=>{
             activePositions.pop();
             drawDistanceLine(activePositions);
             viewer.entities.remove(dynamicShape);
-            openDraw=false;
+            isMouse=false;
             distance=0;
             distancePositions=[];
             activePositions=[];
@@ -63,19 +78,18 @@ function measureDistance()
     }
     else
     {
-        ismeasureDistance=false;
-        measureDistanceButton.style.backgroundColor='greenyellow';
+        isDraw.value=false;
 
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,openDraw=false;
+        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,isMouse=false;
     }
 }
     
 
 //计算距离函数
-function getDistance(distancePositions)
+const getDistance=(distancePositions)=>
 {
     let distance=0;
     for(let i=0;i<=distancePositions.length-2;i++)
@@ -85,7 +99,7 @@ function getDistance(distancePositions)
     return distance;
 }
 //画点、标签函数
-function drawDistanceLable(pickPosition,distance)
+const drawDistanceLable=(pickPosition,distance)=>
 {
     viewer.entities.add({
         position:pickPosition,
@@ -105,7 +119,7 @@ function drawDistanceLable(pickPosition,distance)
     })
 }
 //画线函数
-function drawDistanceLine(positions)
+const drawDistanceLine=(positions)=>
 {
     let shape=viewer.entities.add({
         polyline:{
@@ -116,3 +130,11 @@ function drawDistanceLine(positions)
     })
     return shape;
 }
+
+onUnmounted(()=>{
+    handler.destroy();
+})
+</script>
+<style scoped>
+
+</style>

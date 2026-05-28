@@ -1,40 +1,52 @@
-let watchPositions=[];
+<template>
+    <div class="toolbar">
+        <div class="row">
+            <label class="oneText">通视分析</label>
+            <button @click="drawPolyline" :class="['drawBtn',isDraw?'red':'']">绘制</button>
+        </div>
+    </div>
+</template>
+<script setup>
+import * as Cesium from 'cesium'
+import {ref,onMounted,onUnmounted} from 'vue'
 
-let watchButton=document.getElementById('watchButton');
-let isWatch=false;
+const props=defineProps({viewer:{type:Object,required:true}});
+const viewer=props.viewer;
 
-function drawWatchPolyline()
+const isDraw=ref(false);
+let positions=[];
+let handler;
+
+onMounted(()=>{
+    handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+})
+
+const drawPolyline=()=>
 {
-    if(!isWatch)
+    if(!isDraw.value)
     {
-        isWatch=true;
-        watchButton.style.backgroundColor='red';
+        isDraw.value=true;
 
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-
-        handler.setInputAction(function (event){
+        handler.setInputAction((event)=>{
             let pickPosition=viewer.scene.pickPosition(event.position);
             if(!Cesium.defined(pickPosition))
             return;
             drawPoint(pickPosition);
-            if(watchPositions.length==0)
+            if(positions.length==0)
             {
-                watchPositions.push(pickPosition);
+                positions.push(pickPosition);
             }
-            else if(watchPositions.length==1)
+            else if(positions.length==1)
             {
-                watchPositions.push(pickPosition);
-                selectLine(watchPositions);
-                watchPositions=[];
+                positions.push(pickPosition);
+                selectPolyine(positions);
+                positions=[];
             }
         },Cesium.ScreenSpaceEventType.LEFT_CLICK);
     }
     else
     {
-        isWatch=false;
-        watchButton.style.backgroundColor='greenyellow';
+        isDraw.value=false;
 
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -42,7 +54,7 @@ function drawWatchPolyline()
     }
 }
 
-function selectLine(positions)
+const selectPolyine=(positions)=>
 {
     let subtract=Cesium.Cartesian3.subtract(positions[1],positions[0],new Cesium.Cartesian3());
     let direction=Cesium.Cartesian3.normalize(subtract,new Cesium.Cartesian3());
@@ -55,16 +67,16 @@ function selectLine(positions)
         Cesium.Cartesian3.distance(positions[0],middlePoint)>Cesium.Cartesian3.distance(positions[0],positions[1])
     )
     {
-        drawLine(positions[0],positions[1],'GREEN');
+        addPolyline(positions[0],positions[1],'GREEN');
     }
     else
     {
-        drawLine(positions[0],middlePoint,'GREEN');
-        drawLine(middlePoint,positions[1],'RED');
+        addPolyline(positions[0],middlePoint,'GREEN');
+        addPolyline(middlePoint,positions[1],'RED');
     }
 }
 
-function drawLine(point1,point2,color)
+const addPolyline=(point1,point2,color)=>
 {
     let positions=[point1,point2];
     viewer.entities.add({
@@ -77,7 +89,7 @@ function drawLine(point1,point2,color)
     })
 }
 
-function drawPoint(position)
+const drawPoint=(position)=>
 {
     viewer.entities.add({
         position:position,
@@ -88,3 +100,12 @@ function drawPoint(position)
         }
     })
 }
+
+onUnmounted(()=>
+{
+    handler.destroy();
+})
+
+</script>
+<style scoped>
+</style>

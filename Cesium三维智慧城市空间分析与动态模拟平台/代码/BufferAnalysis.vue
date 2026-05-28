@@ -1,39 +1,71 @@
-let drawTypeSelect=document.getElementById('drawTypeSelect');
-let drawType=undefined;
-let bufferSizeText=document.getElementById('bufferSizeText');
-let bufferSize=Number(bufferSizeText.value);
+<template>
+    <div class="toolbar">
+        <label class="oneText">缓冲区分析</label>
+        <div class="row">
+            <label class="twoText">范围</label>
+            <input v-model.number="bufferSize" class="input">
+        </div>
+        <div class="row">
+            <label class="twoText">类型</label>
+            <select v-model="bufferType" :class="['select input',bufferType?'red':'']">
+                <option value=""></option>
+                <option value="point">点</option>
+                <option value="polyline">线</option>
+                <option value="polygon">面</option>
+            </select>
+        </div>
+    </div>
+</template>
+<script setup>
+import * as Cesium from 'cesium'
+import * as turf from '@turf/turf';
+import {ref,onMounted,onUnmounted,watch} from 'vue'
 
-function F_drawTypeSelect()
+const props=defineProps({viewer:{type:Object,required:true}});
+const viewer=props.viewer;
+
+const bufferType=ref();
+const bufferSize=ref(60);
+
+let isMouse=false,activePositions=[],dynamicPositions,dynamicShape;
+let handler;
+
+onMounted(()=>{
+    handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+})
+
+watch(bufferType,(bufferType)=>{
+    try{
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
+    }catch(e){};
+    drawBuffer();
+})
+
+const drawBuffer=()=>
 {
-    openDraw=false,dynamicShape=undefined,activePositions=[],dynamicPositions=undefined;
-    drawType=drawTypeSelect.value;
-    //按钮着色
-    if(drawType!='undefined')
-    drawTypeSelect.style.backgroundColor='red';
-    else
-    drawTypeSelect.style.backgroundColor='white';
-
-    handler.setInputAction(function (event){
-        if(drawType==undefined)
-        return;
+    if(bufferType.value=='')
+    return;
+    handler.setInputAction((event)=>{
         let pickPosition=viewer.scene.pickPosition(event.position);
         if(!Cesium.defined(pickPosition))
         return;
-        if(drawType=='point')
+        if(bufferType.value=='point')
         {
-            drawShape(pickPosition);
-            drawBuffer([pickPosition]);
+            addShape(pickPosition);
+            addBuffer([pickPosition]);
             return;
         }
         if(activePositions.length==0)//开始
         {
-            openDraw=true;
+            isMouse=true;
             activePositions.push(pickPosition);
-            dynamicPositions=new Cesium.CallbackProperty(function (){
-                if(drawType=='polygon'){return new Cesium.PolygonHierarchy(activePositions)}
+            dynamicPositions=new Cesium.CallbackProperty(()=>{
+                if(bufferType.value=='polygon'){return new Cesium.PolygonHierarchy(activePositions)}
                 else{return activePositions};
             },false);
-            dynamicShape=drawShape(dynamicPositions);
+            dynamicShape=addShape(dynamicPositions);
         }
         else
         {
@@ -41,8 +73,8 @@ function F_drawTypeSelect()
         }
     },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    handler.setInputAction(function (event){
-        if(!openDraw)
+    handler.setInputAction((event)=>{
+        if(!isMouse)
         return;
         let pickPosition=viewer.scene.pickPosition(event.endPosition);
         if(!Cesium.defined(pickPosition))
@@ -52,35 +84,31 @@ function F_drawTypeSelect()
         activePositions.push(pickPosition);
     },Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    handler.setInputAction(function (event){
+    handler.setInputAction((event)=>{
         activePositions.pop();
         viewer.entities.remove(dynamicShape);
         if(activePositions.length)
         {
-            if(drawType=='polygon')
-            drawShape(new Cesium.PolygonHierarchy(activePositions));
+            if(bufferType.value=='polygon')
+            addShape(new Cesium.PolygonHierarchy(activePositions));
             else
-            drawShape(activePositions);
+            addShape(activePositions);
         }
-        drawBuffer(activePositions);
-        openDraw=false;
+        if(activePositions.length)
+        addBuffer(activePositions);
+        isMouse=false;
         dynamicPositions=undefined;
         dynamicShape=undefined;
         activePositions=[];
     },Cesium.ScreenSpaceEventType.RIGHT_CLICK)
 }
 
-function F_bufferSizeText()
-{
-    bufferSize=Number(bufferSizeText.value);
-}
-
-function drawShape(positions)
+const addShape=(positions)=>
 {
     let shape;
     if(!positions)
     return;
-    if(drawType=='point')
+    if(bufferType.value=='point')
     {
         shape=viewer.entities.add({
             position:positions,
@@ -91,7 +119,7 @@ function drawShape(positions)
             }
         })
     }
-    else if(drawType=='polyline')
+    else if(bufferType.value=='polyline')
     {
         shape=viewer.entities.add({
             polyline:{
@@ -103,7 +131,7 @@ function drawShape(positions)
             }
         })
     }
-    else if(drawType=='polygon')
+    else if(bufferType.value=='polygon')
     {
         shape=viewer.entities.add({
             polygon:{
@@ -116,7 +144,7 @@ function drawShape(positions)
     return shape;
 }
 
-function drawBuffer(cartesianArray)
+const addBuffer=(cartesianArray)=>
 {
     if(cartesianArray.length==0)
     return;
@@ -128,11 +156,11 @@ function drawBuffer(cartesianArray)
     })
 
     let bufferShape;
-    if(drawType=='point')
+    if(bufferType.value=='point')
     bufferShape=turf.point(degreeArray[0]);
-    else if(drawType=='polyline'&&cartesianArray.length>=2)
+    else if(bufferType.value=='polyline'&&cartesianArray.length>=2)
     bufferShape=turf.lineString(degreeArray);
-    else if(drawType=='polygon'&&cartesianArray.length>=3)
+    else if(bufferType.value=='polygon'&&cartesianArray.length>=3)
     {
         degreeArray.push(degreeArray[0]);
         bufferShape=turf.polygon([degreeArray]);
@@ -140,7 +168,7 @@ function drawBuffer(cartesianArray)
     if(bufferShape==undefined)
     return;
 
-    let buffer=turf.buffer(bufferShape,bufferSize,{units:'meters'});
+    let buffer=turf.buffer(bufferShape,bufferSize.value,{units:'meters'});
 
     let bufferDegreeArray=buffer.geometry.coordinates[0];
     let bufferCartesianArray=bufferDegreeArray.map(degree=>Cesium.Cartesian3.fromDegrees(degree[0],degree[1]));
@@ -153,3 +181,12 @@ function drawBuffer(cartesianArray)
         }
     })
 }
+
+onUnmounted(()=>{
+    handler.destroy();
+})
+
+</script>
+<style scoped>
+    .select{width:170px}
+</style>

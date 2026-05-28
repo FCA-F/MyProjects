@@ -1,5 +1,16 @@
-let maskButton=document.getElementById('maskButton');
-let isMask=false;
+<template>
+    <div class="toolbar">
+        <button @click="drawMask()" :class="['functionBtn',isMask?'red':'']">遮罩</button>
+    </div>
+</template>
+<script setup>
+import * as Cesium from 'cesium'
+import {ref} from 'vue'
+
+const props=defineProps({viewer:{type:Object,required:true}});
+const viewer=props.viewer;
+
+const isMask=ref(false);
 
 let outPositions=Cesium.Cartesian3.fromDegreesArray([
     114.3815897138, 30.5293157082,
@@ -17,12 +28,11 @@ let inPositions=Cesium.Cartesian3.fromDegreesArray([
 ])
 
 let mask,maskPolyline;
-function F_mask()
+const drawMask=()=>
 {
-    if(!isMask)
+    if(!isMask.value)
     {
-        isMask=true;
-        maskButton.style.backgroundColor='red';
+        isMask.value=true;
 
         //遮罩
         mask=viewer.entities.add({
@@ -46,11 +56,14 @@ function F_mask()
     }
     else
     {
-        isMask=false;
-        maskButton.style.backgroundColor='rgb(165,243,243)';
+        isMask.value=false;
 
         viewer.entities.remove(mask);
         viewer.entities.remove(maskPolyline);
-        maskPolyline.polyline.show=false;
     }
 }
+
+</script>
+<style scoped>
+
+</style>

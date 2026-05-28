@@ -1,16 +1,33 @@
-let measureCoordinateButton=document.getElementById('measureCoordinateButton');
-let ismeasureCoordinate=false;
+<template>
+    <div class="toorbal">
+        <div class="row">
+            <label class="oneText">坐标测量</label>
+            <button @click="measureCoordinate()" :class="['drawBtn',isDraw?'red':'']" >绘制</button>
+        </div>
+    </div>
+</template>
+<script setup>
+import * as Cesium from 'cesium'
+import {ref,onMounted,onUnmounted} from 'vue'
 
-function measureCoordinate()
+const props=defineProps({viewer:{type:Object,required:true},annotations:{type:Object,required:true}});
+const viewer=props.viewer;
+const annotations=props.annotations;//标签对象
+
+const isDraw=ref(false);
+let handler;
+
+
+onMounted(()=>{
+    handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+})
+
+const measureCoordinate=()=>
 {
-    if(!ismeasureCoordinate)
+    if(!isDraw.value)
     {
-        ismeasureCoordinate=true;
-        measureCoordinateButton.style.backgroundColor='red';
+        isDraw.value=true;
 
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-        handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
         //采点
         handler.setInputAction(function (event){
             let pickPosition=viewer.scene.pickPosition(event.position);
@@ -26,19 +43,16 @@ function measureCoordinate()
     }
     else
     {
-        ismeasureCoordinate=false;
-        measureCoordinateButton.style.backgroundColor='greenyellow';
-
+        isDraw.value=false;
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
     }
 }
 
-let annotations=viewer.scene.primitives.add(new Cesium.LabelCollection());//标签对象
 
 //绘制点与标签
-function createLabel(cartesian)
+const createLabel=(cartesian)=>
 {
     let cartographic=Cesium.Cartographic.fromCartesian(cartesian);
     let lon=Cesium.Math.toDegrees(cartographic.longitude);
@@ -68,3 +82,11 @@ function createLabel(cartesian)
         disableDepthTestDistance:1000
     })
 }
+
+onUnmounted(()=>{
+    handler.destroy();
+})
+
+</script>
+<style scoped>
+</style>

@@ -1,13 +1,42 @@
+<template>
+    <div class="toolbar">
+        <label class="oneText">建筑着色</label>
+        <select v-model="buildingStyle" class="select input">
+            <option value="null"></option>
+            <option value="按建筑类型着色">按建筑类型着色</option>
+            <option value="按指定位置的距离着色">按指定位置的距离着色</option>
+            <option value="交互着色">交互着色</option>
+            <option value="building属性为dormitory">building属性为dormitory</option>
+        </select>
+    </div>
+</template>
 
-let buildingRenderSelect=document.getElementById('buildingRenderSelect');
-function F_buildingRenderSelect()
-{
-    handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
-    handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-    handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-    osmBuildingTile.style=new Cesium.Cesium3DTileStyle();
-    switch(buildingRenderSelect.value)
+<script setup>
+import * as Cesium from 'cesium'
+import {ref,watch,onMounted,onUnmounted} from 'vue'
+
+const props=defineProps({viewer:{type:Object,required:true},osmBuildingTile:{type:Object,required:true}});
+const viewer=props.viewer;
+const osmBuildingTile=props.osmBuildingTile;
+
+const buildingStyle=ref();
+
+let handler;
+
+onMounted(()=>{
+    handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
+})
+
+watch(buildingStyle,(buildingStyle)=>{
+    try{
+        handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+    }
+    catch(e){};
+
+    switch(buildingStyle)
     {
+        case 'null':
+            osmBuildingTile.style=new Cesium.Cesium3DTileStyle();break;
         case '按建筑类型着色':
             colorByBuildingStyle();break;
         case '按指定位置的距离着色':
@@ -18,9 +47,9 @@ function F_buildingRenderSelect()
             showBybuildingType('dormitory');break;
         default:break;
     }
-}
+})
 //按建筑类型设置颜色
-function colorByBuildingStyle()
+const colorByBuildingStyle=()=>
 {
     let style=new Cesium.Cesium3DTileStyle({
         color:{
@@ -37,9 +66,8 @@ function colorByBuildingStyle()
     osmBuildingTile.style=style;
 }
 //按指定位置的距离选择颜色
-function colorByBuildingDistance()
+const colorByBuildingDistance=()=>
 {
-    
     handler.setInputAction(function (event){
         let pickFeature=viewer.scene.pick(event.position);
         if(!(pickFeature instanceof Cesium.Cesium3DTileFeature))
@@ -66,7 +94,7 @@ function colorByBuildingDistance()
     },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 //交互渲染
-function interactiveRendering()
+const interactiveRendering=()=>
 {
     handler.setInputAction(function (event){
         let pickFeature=viewer.scene.pick(event.position);
@@ -84,7 +112,7 @@ function interactiveRendering()
     },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 //building属性为dormitory
-function showBybuildingType(showBuildingType)
+const showBybuildingType=(showBuildingType)=>
 {
     let style=new Cesium.Cesium3DTileStyle({
         color:{
@@ -95,3 +123,14 @@ function showBybuildingType(showBuildingType)
     });
     osmBuildingTile.style=style;
 }
+
+onUnmounted(()=>
+{
+    if(handler)
+    handler.destroy();
+})
+
+</script>
+<style scoped>
+    .select{width:250px;height:24px}
+</style>
