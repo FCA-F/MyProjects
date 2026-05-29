@@ -28,26 +28,28 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
-import {ref,watch,onMounted,onUnmounted} from 'vue'
+import {onMounted,ref,watch} from 'vue'
 
-const props=defineProps({
-    viewer:{type:Object,required:true},
-    tileset:{type:Object,required:true}
-})
-
-let viewer=props.viewer;
-let tileset=props.tileset;
+const {tileset}=defineProps<{tileset:Cesium.Cesium3DTileset}>();
 
 const height=ref(0);
 const tLon=ref(0),tLat=ref(0),rx=ref(0),ry=ref(0),rz=ref(0);
 const scale=ref(1);
-let starCartographic,params,mStar;
+let starCartographic:Cesium.Cartographic;
+let mStar:Cesium.Matrix4;
+
+interface ModelParams{
+    x:number
+    y:number
+    z:number
+}
+let params:ModelParams={x:0,y:0,z:0};
+
 
 onMounted(async()=>
 {
-    await tileset.readyPromise;
     starCartographic=Cesium.Cartographic.fromCartesian(tileset.boundingSphere.center);
     //获取模型中心坐标（弧度=>经纬度）
     params={
@@ -56,7 +58,7 @@ onMounted(async()=>
         z:starCartographic.height
     }
     //获取模型矩阵
-    mStar=tileset._root.transform
+    mStar=tileset.root.transform
 })
 
 
@@ -95,20 +97,23 @@ watch([tLon,tLat,rx,ry,rz],([tLon,tLat,rx,ry,rz])=>
     Cesium.Matrix4.multiply(m,mrx4,m);
     Cesium.Matrix4.multiply(m,mry4,m);
     Cesium.Matrix4.multiply(m,mrz4,m);
-    tileset._root.transform=m;
+    tileset.root.transform=m;
 })
 watch(scale,(scale)=>
 {
     let mScale=Cesium.Matrix4.fromUniformScale(scale);
     let m=Cesium.Matrix4.multiply(mStar,mScale,new Cesium.Matrix4());
-    tileset._root.transform=m;
+    tileset.root.transform=m;
 })
+
+
 </script>
+
 
 <style scoped>
     .adjustDiv{
-        position:absolute;top:50px;left:20px;width:200px;
-        text-align: left;
+        position:absolute;top:50px;left:25px;width:200px;
+        text-align:left;
         background-color:rgba(0,0,0,0.6)
         }
 </style>

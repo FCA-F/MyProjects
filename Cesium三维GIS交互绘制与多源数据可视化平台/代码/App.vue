@@ -1,12 +1,12 @@
 <template>
   <div id="cesiumContainer"></div>
   <DrawTool v-if="viewer" :viewer="viewer" />
-  <AdjustTool v-if="tileset" :viewer="viewer" :tileset="tileset"/>
+  <AdjustTool v-if="tileset" :tileset="tileset"/>
   <Coordinate v-if="viewer" :viewer="viewer"/>
-  <Message v-if="tileset" :viewer="viewer"/>
+  <Message v-if="viewer&&tileset" :viewer="viewer"/>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium';
 import { onMounted, ref } from 'vue';
 import DrawTool from './components/DrawTool.vue';
@@ -14,17 +14,17 @@ import AdjustTool from './components/AdjustTool.vue';
 import Coordinate from './components/Coordinate.vue';
 import Message from './components/Message.vue';
 
-const viewer=ref(null);
-const tileset=ref(null);
+const viewer=ref<Cesium.Viewer>();
+const tileset=ref<Cesium.Cesium3DTileset>();
 
 onMounted(async()=>{
   Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY';
   viewer.value=new Cesium.Viewer('cesiumContainer');
-  viewer.value.scene.globe.depthTestAgainstTerrain = true;
+  viewer.value.scene.globe.depthTestAgainstTerrain=true;
   const Load=async()=>{
       tileset.value=await Cesium.Cesium3DTileset.fromUrl('/data/da_yan_ta/tileset.json')
-      viewer.value.scene.primitives.add(tileset.value)
-      await viewer.value.zoomTo(tileset.value)
+      viewer.value!.scene.primitives.add(tileset.value)
+      viewer.value!.zoomTo(tileset.value)
     } 
     await Load();
 })

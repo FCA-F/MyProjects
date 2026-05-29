@@ -3,16 +3,14 @@
         <button  @click="displayMessage" style="width:100px;height:30px">{{ text }}</button>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,onMounted} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-
-const viewer=props.viewer;
-const text=ref("隐藏信息")
-const isShowMessage=ref(false);
-let messageTileset;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
+const text=ref<string>("隐藏信息")
+const isShowMessage=ref<boolean>(false);
+let messageTileset:Cesium.Cesium3DTileset;
 
 
 const displayMessage=()=>{

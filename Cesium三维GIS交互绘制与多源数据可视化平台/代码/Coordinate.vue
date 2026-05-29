@@ -4,22 +4,18 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium';
-import {onMounted,ref} from 'vue';
+import {onMounted,ref,onUnmounted} from 'vue';
 
-const props=defineProps({
-    viewer:{type:Object,required:true}
-})
-
-let viewer=props.viewer;
-const coordinate=ref(null);
-let handler;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
+const coordinate=ref<string|null>(null);
+let handler:Cesium.ScreenSpaceEventHandler;
 
 onMounted(()=>
 {
     handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
-    handler.setInputAction((event)=>
+    handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.MotionEvent)=>
     {
         let position=viewer.scene.pickPosition(event.endPosition);
         if(!Cesium.defined(position))
@@ -34,6 +30,10 @@ onMounted(()=>
         coordinate.value=`${lon.toFixed(3)}  ,${lat.toFixed(3)},  ${height.toFixed(3)}`;
     },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
 });
+
+onUnmounted(()=>{
+    handler.destroy();
+})
 </script>
 
 <style scoped>

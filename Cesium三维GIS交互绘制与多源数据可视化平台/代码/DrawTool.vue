@@ -14,27 +14,23 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,watch,onMounted,onUnmounted} from 'vue'
 
-const props=defineProps({
-    viewer:{type:Object,required:true}
-})
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
-const viewer=props.viewer;
+const drawingMode=ref<''|'point'|'model'|'line'|'polygon'|'rectangle'|'circle'|'delete'>()
 
-const drawingMode=ref(undefined)
-
-let openDraw=false
-let dynamicShape=undefined
-let activeShapePoints=[]
-let dynamicPositions=undefined
-let tempPoints=[]
-let handler=null
+let openDraw=false;
+let dynamicShape:Cesium.Entity|undefined;
+let activeShapePoints:Cesium.Cartesian3[]=[];
+let dynamicPositions:Cesium.CallbackProperty|undefined;
+let tempPoints:Cesium.Entity[]=[];
+let handler:Cesium.ScreenSpaceEventHandler;
 
 //绘制点
-const drawPoint=(position)=>
+const drawPoint=(position:Cesium.Cartesian3):Cesium.Entity=>
 {
     let shape=viewer.entities.add(
         {
@@ -48,7 +44,7 @@ const drawPoint=(position)=>
     return shape;
 }
 //绘制模型
-const drawModel=(position)=>
+const drawModel=(position:Cesium.Cartesian3):Cesium.Entity=>
 {
     let shape=viewer.entities.add(
         {
@@ -62,7 +58,7 @@ const drawModel=(position)=>
     return shape;
 }
 //绘制线和面
-const drawShape=(position)=>
+const drawShape=(position:any):Cesium.Entity|undefined=>
 {
     let shape;
     //线
@@ -134,7 +130,7 @@ const drawShape=(position)=>
 }
 onMounted(() => {
   handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
-  handler.setInputAction((event)=>
+  handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>
   {
       let position=viewer.scene.pickPosition(event.position);
       if(!Cesium.defined(position))
@@ -171,7 +167,7 @@ onMounted(() => {
   },Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
   //鼠标移动事件
-  handler.setInputAction((event)=>
+  handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.MotionEvent)=>
   {
         if(!openDraw)
         return;
@@ -185,13 +181,13 @@ onMounted(() => {
   },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
 
   //鼠标右击事件
-  handler.setInputAction((event)=>
+  handler.setInputAction(()=>
   {
         openDraw=false;
         activeShapePoints.pop();
         if(activeShapePoints.length)
         drawShape(activeShapePoints)
-        viewer.entities.remove(dynamicShape);
+        viewer.entities.remove(dynamicShape!);
         tempPoints.forEach(point=>viewer.entities.remove(point))
         tempPoints=[];
         dynamicShape=undefined;
@@ -213,7 +209,7 @@ onUnmounted(()=>{
   handler.destroy()
 })
 
-function generateCircleCoordinates(centerCartographic,radius,steps=64){
+const generateCircleCoordinates=(centerCartographic:Cesium.Cartographic,radius:number,steps=64)=>{
     const coords=[];
     const lon=Cesium.Math.toDegrees(centerCartographic.longitude);
     const lat=Cesium.Math.toDegrees(centerCartographic.latitude);
@@ -234,14 +230,14 @@ function generateCircleCoordinates(centerCartographic,radius,steps=64){
 
 //导出函数
 const exportEntities=()=>{
-    let features=[];
+    let features:any[]=[];
     let entities=viewer.entities.values;
     let now=Cesium.JulianDate.now();
 
     entities.forEach(entity=>{
         //1.点
         if (entity.point&&entity.position) {
-            let position=entity.position.getValue(now);
+            let position=entity.position.getValue(now)!;//非空断言，告诉TS这里不会返回undefined
             let cartographic=Cesium.Cartographic.fromCartesian(position);
             features.push({
                 type:"Feature",
@@ -255,7 +251,7 @@ const exportEntities=()=>{
         //2.线
         else if (entity.polyline&&entity.polyline.positions) {
             let positions=entity.polyline.positions.getValue(now);
-            let coords=positions.map(point=>{
+            let coords=positions.map((point:Cesium.Cartesian3)=>{
                 let cartographic=Cesium.Cartographic.fromCartesian(point);
                 return [Cesium.Math.toDegrees(cartographic.longitude), Cesium.Math.toDegrees(cartographic.latitude), 0];
             });
@@ -269,7 +265,7 @@ const exportEntities=()=>{
         //3.面
         else if(entity.polygon&&entity.polygon.hierarchy){
             let hierarchy=entity.polygon.hierarchy.getValue(now);
-            let coords=hierarchy.positions.map(point=>{
+            let coords=hierarchy.positions.map((point:Cesium.Cartesian3)=>{
                 let cartographic=Cesium.Cartographic.fromCartesian(point);
                 return [Cesium.Math.toDegrees(cartographic.longitude),Cesium.Math.toDegrees(cartographic.latitude), 0];
             });
@@ -298,9 +294,9 @@ const exportEntities=()=>{
         }
         //5.圆
         else if (entity.ellipse&&entity.position) {
-            let center=entity.position.getValue(now);
+            let center=entity.position.getValue(now)!;
             let centerCartographic=Cesium.Cartographic.fromCartesian(center);
-            let radius=entity.ellipse.semiMajorAxis.getValue(now)||0;//加0防止异常
+            let radius=entity.ellipse.semiMajorAxis!.getValue(now)||0;//加0防止异常
             let coords=generateCircleCoordinates(centerCartographic,radius);
             coords.push(coords[0]);
             features.push({
