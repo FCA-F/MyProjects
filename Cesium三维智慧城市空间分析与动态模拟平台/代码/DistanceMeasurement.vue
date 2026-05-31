@@ -6,16 +6,15 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,onMounted,onUnmounted} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
 const isDraw=ref(false);
 let isMouse=false;
-let handler;
+let handler:Cesium.ScreenSpaceEventHandler;
 
 onMounted(()=>{
     handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
@@ -24,13 +23,17 @@ onMounted(()=>{
 
 const measureDistance=()=>
 {
-    let distancePositions=[],distance=0,activePositions=[],dynamicShape,dynamicPositions;
+    let distancePositions:Cesium.Cartesian3[]=[];
+    let distance=0;
+    let activePositions:Cesium.Cartesian3[]=[];
+    let dynamicShape:Cesium.Entity|undefined;
+    let dynamicPositions:Cesium.CallbackProperty|undefined;
     if(!isDraw.value)
     {
         isDraw.value=true;
 
         //采点
-        handler.setInputAction((event)=>{
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
         let pickPosition=viewer.scene.pickPosition(event.position);
         if(!Cesium.defined(pickPosition))
         return;
@@ -42,7 +45,7 @@ const measureDistance=()=>
             //线
             isMouse=true;
             activePositions.push(pickPosition);
-            let dynamicPositions=new Cesium.CallbackProperty(()=>{return activePositions},false);
+            dynamicPositions=new Cesium.CallbackProperty(()=>{return activePositions},false);
             dynamicShape=drawDistanceLine(dynamicPositions);
         }
         else
@@ -54,7 +57,7 @@ const measureDistance=()=>
         }
         },Cesium.ScreenSpaceEventType.LEFT_CLICK);
         //追踪
-        handler.setInputAction((event)=>{
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.MotionEvent)=>{
             if(!isMouse)
             return;
             let pickPosition=viewer.scene.pickPosition(event.endPosition);
@@ -65,10 +68,10 @@ const measureDistance=()=>
             activePositions.push(pickPosition);
         },Cesium.ScreenSpaceEventType.MOUSE_MOVE)
         //确认图形，结束
-        handler.setInputAction((event)=>{
+        handler.setInputAction(()=>{
             activePositions.pop();
             drawDistanceLine(activePositions);
-            viewer.entities.remove(dynamicShape);
+            viewer.entities.remove(dynamicShape!);
             isMouse=false;
             distance=0;
             distancePositions=[];
@@ -83,13 +86,13 @@ const measureDistance=()=>
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.RIGHT_CLICK);
-        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,dynamicPositions=undefined,isMouse=false;
+        distancePositions=[],distance=0,activePositions=[],dynamicShape=undefined,isMouse=false;
     }
 }
     
 
 //计算距离函数
-const getDistance=(distancePositions)=>
+const getDistance=(distancePositions:Cesium.Cartesian3[])=>
 {
     let distance=0;
     for(let i=0;i<=distancePositions.length-2;i++)
@@ -99,7 +102,7 @@ const getDistance=(distancePositions)=>
     return distance;
 }
 //画点、标签函数
-const drawDistanceLable=(pickPosition,distance)=>
+const drawDistanceLable=(pickPosition:Cesium.Cartesian3,distance:number)=>
 {
     viewer.entities.add({
         position:pickPosition,
@@ -119,7 +122,7 @@ const drawDistanceLable=(pickPosition,distance)=>
     })
 }
 //画线函数
-const drawDistanceLine=(positions)=>
+const drawDistanceLine=(positions:Cesium.Cartesian3[]|Cesium.CallbackProperty)=>
 {
     let shape=viewer.entities.add({
         polyline:{

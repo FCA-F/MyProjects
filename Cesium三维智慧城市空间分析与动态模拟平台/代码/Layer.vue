@@ -16,20 +16,18 @@
 </template>
     
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,watch} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 const layerStyle=ref('default');//图层样式
 const contourSpace=ref(150);//等高线间距
 
 let contourMaterial=Cesium.Material.fromType('ElevationContour');//等高线
-contourMaterial.spacing=150;
-contourMaterial.width=2;
-contourMaterial.color=Cesium.Color.RED;
+contourMaterial.uniforms.spacing=150;
+contourMaterial.uniforms.width=2;
+contourMaterial.uniforms.color=Cesium.Color.RED;
 let slopeRamp=[0.0,0.1,0.2,0.3,0.4,0.5,0.6];//坡度梯度
 let aspectRamp=[0.0,0.2,0.4,0.6,0.8,0.9,1.0];//坡向梯度
 
@@ -77,7 +75,7 @@ function getSlopeRampCanvas()
     let canvas=document.createElement('canvas');
     canvas.width=100;
     canvas.height=1;
-    let context=canvas.getContext('2d');
+    let context=canvas.getContext('2d') as CanvasRenderingContext2D;
     let gradient=context.createLinearGradient(0,0,100,0);//(x1,y1,x2,y2)
     gradient.addColorStop(slopeRamp[0],Cesium.Color.RED.toCssColorString());
     gradient.addColorStop(slopeRamp[1],Cesium.Color.ORANGE.toCssColorString());
@@ -96,7 +94,7 @@ function getAspectRampCanvas()
     let canvas=document.createElement('canvas');
     canvas.width=100;
     canvas.height=1;
-    let context=canvas.getContext('2d');
+    let context=canvas.getContext('2d') as CanvasRenderingContext2D;
     let gradient=context.createLinearGradient(0,0,100,0);//(x1,y1,x2,y2)
     gradient.addColorStop(aspectRamp[0],Cesium.Color.RED.toCssColorString());
     gradient.addColorStop(aspectRamp[1],Cesium.Color.YELLOW.toCssColorString());

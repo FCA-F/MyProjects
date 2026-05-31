@@ -6,16 +6,14 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,onMounted,onUnmounted} from 'vue'
-
-const props=defineProps({viewer:{type:Object,required:true},annotations:{type:Object,required:true}});
-const viewer=props.viewer;
-const annotations=props.annotations;//标签对象
+//viewer,标签集
+const {viewer,annotations}=defineProps<{viewer:Cesium.Viewer,annotations:Cesium.LabelCollection}>();
 
 const isDraw=ref(false);
-let handler;
+let handler:Cesium.ScreenSpaceEventHandler;
 
 
 onMounted(()=>{
@@ -29,14 +27,14 @@ const measureCoordinate=()=>
         isDraw.value=true;
 
         //采点
-        handler.setInputAction(function (event){
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
             let pickPosition=viewer.scene.pickPosition(event.position);
             if(!pickPosition)
             return;
             createLabel(pickPosition);
         },Cesium.ScreenSpaceEventType.LEFT_CLICK);
         //删点
-        handler.setInputAction(function (event){
+        handler.setInputAction(()=>{
             viewer.entities.removeAll();
             annotations.removeAll();
         },Cesium.ScreenSpaceEventType.RIGHT_CLICK);
@@ -52,7 +50,7 @@ const measureCoordinate=()=>
 
 
 //绘制点与标签
-const createLabel=(cartesian)=>
+const createLabel=(cartesian:Cesium.Cartesian3)=>
 {
     let cartographic=Cesium.Cartographic.fromCartesian(cartesian);
     let lon=Cesium.Math.toDegrees(cartographic.longitude);

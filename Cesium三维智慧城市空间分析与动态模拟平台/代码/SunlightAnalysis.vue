@@ -20,13 +20,11 @@
         <button @click="sunlightAnalysis" :class="['startOrStopBtn',startOrStop?'red':'']">{{ startOrStopText }}</button>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
 const date=ref("2025-6-10");
 const startHour=ref(0);

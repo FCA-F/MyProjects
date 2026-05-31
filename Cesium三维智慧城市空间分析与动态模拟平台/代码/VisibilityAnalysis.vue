@@ -6,16 +6,15 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,onMounted,onUnmounted} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
 const isDraw=ref(false);
-let positions=[];
-let handler;
+let positions:Cesium.Cartesian3[]=[];
+let handler:Cesium.ScreenSpaceEventHandler;
 
 onMounted(()=>{
     handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
@@ -27,7 +26,7 @@ const drawPolyline=()=>
     {
         isDraw.value=true;
 
-        handler.setInputAction((event)=>{
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
             let pickPosition=viewer.scene.pickPosition(event.position);
             if(!Cesium.defined(pickPosition))
             return;
@@ -54,12 +53,12 @@ const drawPolyline=()=>
     }
 }
 
-const selectPolyine=(positions)=>
+const selectPolyine=(positions:Cesium.Cartesian3[])=>
 {
     let subtract=Cesium.Cartesian3.subtract(positions[1],positions[0],new Cesium.Cartesian3());
     let direction=Cesium.Cartesian3.normalize(subtract,new Cesium.Cartesian3());
     let ray=new Cesium.Ray(positions[0],direction);
-    let pickObject=viewer.scene.pickFromRay(ray,[]);
+    let pickObject=(viewer.scene as any).pickFromRay(ray,[]);
     let middlePoint;
     if(Cesium.defined(pickObject))
     middlePoint=pickObject.position;
@@ -76,20 +75,20 @@ const selectPolyine=(positions)=>
     }
 }
 
-const addPolyline=(point1,point2,color)=>
+const addPolyline=(point1:Cesium.Cartesian3,point2:Cesium.Cartesian3,color:keyof typeof Cesium.Color)=>//keyof:取所有键,typeof:取类型
 {
     let positions=[point1,point2];
     viewer.entities.add({
         polyline:{
             positions:positions,
-            material:Cesium.Color[color],
+            material:Cesium.Color[color] as Cesium.Color,
             width:6,
-            depthFailMaterial:Cesium.Color[color]
+            depthFailMaterial:Cesium.Color[color] as Cesium.Color
         }
     })
 }
 
-const drawPoint=(position)=>
+const drawPoint=(position:Cesium.Cartesian3)=>
 {
     viewer.entities.add({
         position:position,

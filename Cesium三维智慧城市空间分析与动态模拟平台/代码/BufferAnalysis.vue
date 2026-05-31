@@ -16,25 +16,27 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import * as turf from '@turf/turf';
 import {ref,onMounted,onUnmounted,watch} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
-const bufferType=ref();
+const bufferType=ref('');
 const bufferSize=ref(60);
 
-let isMouse=false,activePositions=[],dynamicPositions,dynamicShape;
-let handler;
+let isMouse=false
+let activePositions:Cesium.Cartesian3[]=[];
+let dynamicPositions:Cesium.CallbackProperty|undefined;
+let dynamicShape:Cesium.Entity|undefined;
+let handler:Cesium.ScreenSpaceEventHandler;
 
 onMounted(()=>{
     handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
 })
 
-watch(bufferType,(bufferType)=>{
+watch(bufferType,()=>{
     try{
         handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
         handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -47,7 +49,7 @@ const drawBuffer=()=>
 {
     if(bufferType.value=='')
     return;
-    handler.setInputAction((event)=>{
+    handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
         let pickPosition=viewer.scene.pickPosition(event.position);
         if(!Cesium.defined(pickPosition))
         return;
@@ -73,7 +75,7 @@ const drawBuffer=()=>
         }
     },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    handler.setInputAction((event)=>{
+    handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.MotionEvent)=>{
         if(!isMouse)
         return;
         let pickPosition=viewer.scene.pickPosition(event.endPosition);
@@ -84,9 +86,9 @@ const drawBuffer=()=>
         activePositions.push(pickPosition);
     },Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    handler.setInputAction((event)=>{
+    handler.setInputAction(()=>{
         activePositions.pop();
-        viewer.entities.remove(dynamicShape);
+        viewer.entities.remove(dynamicShape!);
         if(activePositions.length)
         {
             if(bufferType.value=='polygon')
@@ -103,7 +105,7 @@ const drawBuffer=()=>
     },Cesium.ScreenSpaceEventType.RIGHT_CLICK)
 }
 
-const addShape=(positions)=>
+const addShape=(positions:Cesium.Cartesian3|Cesium.Cartesian3[]|Cesium.PolygonHierarchy|Cesium.CallbackProperty|undefined)=>
 {
     let shape;
     if(!positions)
@@ -111,11 +113,10 @@ const addShape=(positions)=>
     if(bufferType.value=='point')
     {
         shape=viewer.entities.add({
-            position:positions,
+            position:positions as Cesium.Cartesian3,
             point:{
                 pixelSize:5,
-                color:Cesium.Color.RED,
-                zIndex:1
+                color:Cesium.Color.RED
             }
         })
     }
@@ -123,7 +124,7 @@ const addShape=(positions)=>
     {
         shape=viewer.entities.add({
             polyline:{
-            positions:positions,
+            positions:positions as Cesium.Cartesian3[],
             material:Cesium.Color.RED,
             width:5,
             clampToGround:true,
@@ -135,7 +136,7 @@ const addShape=(positions)=>
     {
         shape=viewer.entities.add({
             polygon:{
-                hierarchy:positions,
+                hierarchy:positions as Cesium.PolygonHierarchy,
                 material:Cesium.Color.RED,
                 zIndex:1
             }
@@ -144,7 +145,7 @@ const addShape=(positions)=>
     return shape;
 }
 
-const addBuffer=(cartesianArray)=>
+const addBuffer=(cartesianArray:Cesium.Cartesian3[])=>
 {
     if(cartesianArray.length==0)
     return;
@@ -170,7 +171,7 @@ const addBuffer=(cartesianArray)=>
 
     let buffer=turf.buffer(bufferShape,bufferSize.value,{units:'meters'});
 
-    let bufferDegreeArray=buffer.geometry.coordinates[0];
+    let bufferDegreeArray=buffer!.geometry.coordinates[0] as number[][];
     let bufferCartesianArray=bufferDegreeArray.map(degree=>Cesium.Cartesian3.fromDegrees(degree[0],degree[1]));
     let hierarchy=new Cesium.PolygonHierarchy(bufferCartesianArray);
 

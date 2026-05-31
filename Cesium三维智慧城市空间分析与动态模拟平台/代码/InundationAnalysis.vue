@@ -22,12 +22,11 @@
         </div>   
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,onMounted,onUnmounted} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}})
-const viewer=props.viewer
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
 const isDraw=ref(false);//是否绘制
 const isWater=ref(false);//是否涨水
@@ -36,8 +35,10 @@ const step=ref(0.02);//水位上升间隔
 const maxInundationHeight=ref(500)//最大淹没高度
 const startOrStopText=ref("开始")//按钮文本
 
-let handler;
-let dynamicShape=undefined,activePositions=[];//动态临时图形，绘制图形点集
+let handler:Cesium.ScreenSpaceEventHandler;
+let activePositions:Cesium.Cartesian3[]=[];//动态临时图形，绘制图形点集
+let dynamicPositions:Cesium.CallbackProperty|undefined;
+let dynamicShape:Cesium.Entity|undefined;
 let isMouse=false;//鼠标移动追踪
 
 onMounted(()=>{
@@ -51,7 +52,7 @@ const drawInundationRegion=()=>
     {
         isDraw.value=true;
         //采点(左键)
-        handler.setInputAction((event)=>{
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
             let pickPosition=viewer.scene.pickPosition(event.position);
             if(!Cesium.defined(pickPosition))
             return;
@@ -59,8 +60,8 @@ const drawInundationRegion=()=>
             {
                 isMouse=true;
                 activePositions.push(pickPosition);
-                let dynamicPositions=new Cesium.CallbackProperty(
-                    function (){return new Cesium.PolygonHierarchy(activePositions)},false);
+                dynamicPositions=new Cesium.CallbackProperty(
+                    ()=>{return new Cesium.PolygonHierarchy(activePositions)},false);
                 dynamicShape=drawPolygon(dynamicPositions);
             }
             else
@@ -70,7 +71,7 @@ const drawInundationRegion=()=>
         },Cesium.ScreenSpaceEventType.LEFT_CLICK)
 
         //移动追踪绘制（移动）
-        handler.setInputAction((event)=>{
+        handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.MotionEvent)=>{
             if(!isMouse)
             return;
             let pickPosition=viewer.scene.pickPosition(event.endPosition);
@@ -82,9 +83,9 @@ const drawInundationRegion=()=>
         },Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
         //确认，终止（右键）
-        handler.setInputAction((event)=>{
+        handler.setInputAction(()=>{
             activePositions.pop();
-            viewer.entities.remove(dynamicShape);
+            viewer.entities.remove(dynamicShape!);
             drawInundationPolygon(activePositions);
             isMouse=false;
             activePositions=[];
@@ -103,7 +104,7 @@ const drawInundationRegion=()=>
 }
 
 //绘制普通静态面
-const drawPolygon=(positions)=>
+const drawPolygon=(positions:Cesium.PolygonHierarchy|Cesium.CallbackProperty)=>
 {
     let polygon=viewer.entities.add({
         polygon:{
@@ -115,7 +116,7 @@ const drawPolygon=(positions)=>
 }
 
 //绘制动态水面
-const drawInundationPolygon=(positions)=>{
+const drawInundationPolygon=(positions:Cesium.Cartesian3[])=>{
     let polygon=viewer.entities.add({
         polygon:{
             hierarchy:positions,

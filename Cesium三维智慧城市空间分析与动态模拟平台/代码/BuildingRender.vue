@@ -11,17 +11,15 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,watch,onMounted,onUnmounted} from 'vue'
 
-const props=defineProps({viewer:{type:Object,required:true},osmBuildingTile:{type:Object,required:true}});
-const viewer=props.viewer;
-const osmBuildingTile=props.osmBuildingTile;
+const {viewer,osmBuildingTile}=defineProps<{viewer:Cesium.Viewer,osmBuildingTile:Cesium.Cesium3DTileset}>();
 
 const buildingStyle=ref();
 
-let handler;
+let handler:Cesium.ScreenSpaceEventHandler;
 
 onMounted(()=>{
     handler=new Cesium.ScreenSpaceEventHandler(viewer.canvas);
@@ -68,7 +66,7 @@ const colorByBuildingStyle=()=>
 //按指定位置的距离选择颜色
 const colorByBuildingDistance=()=>
 {
-    handler.setInputAction(function (event){
+    handler.setInputAction(function (event:Cesium.ScreenSpaceEventHandler.PositionedEvent){
         let pickFeature=viewer.scene.pick(event.position);
         if(!(pickFeature instanceof Cesium.Cesium3DTileFeature))
         return;
@@ -96,7 +94,7 @@ const colorByBuildingDistance=()=>
 //交互渲染
 const interactiveRendering=()=>
 {
-    handler.setInputAction(function (event){
+    handler.setInputAction((event:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
         let pickFeature=viewer.scene.pick(event.position);
         if(!(pickFeature instanceof Cesium.Cesium3DTileFeature))
         return;
@@ -112,7 +110,7 @@ const interactiveRendering=()=>
     },Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 //building属性为dormitory
-const showBybuildingType=(showBuildingType)=>
+const showBybuildingType=(showBuildingType:string)=>
 {
     let style=new Cesium.Cesium3DTileStyle({
         color:{

@@ -7,15 +7,14 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import* as Cesium from 'cesium'
 import{ref,onMounted}from'vue'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 const carMoving=ref(false);
 const startOrStopText=ref('开始');
-let car,carPositionProperty;//车，车位置属性(增加功能时可用)
+let car:Cesium.Entity;
 
 let czml=[
     {
@@ -59,9 +58,8 @@ let czml=[
 //加载车
 onMounted(()=>{
     viewer.dataSources.add(Cesium.CzmlDataSource.load(czml)).then((dataSource)=>{
-    car=dataSource.entities.getById('car');
+    car=dataSource.entities.getById('car') as Cesium.Entity;
     car.orientation=new Cesium.VelocityOrientationProperty(car.position);
-    carPositionProperty=car.position;
     });
 });
 
@@ -90,7 +88,7 @@ const carMove=()=>{
     }
 }
 
-let animationFrameId;
+let animationFrameId:number|null;
 
 const move=()=>{
     viewer.clock.shouldAnimate=true;
@@ -99,7 +97,7 @@ const move=()=>{
 
 const stopMove=()=>{
     viewer.clock.shouldAnimate=false;
-    cancelAnimationFrame(animationFrameId);
+    cancelAnimationFrame(animationFrameId!);
     animationFrameId=null;
 }
 //帧渲染

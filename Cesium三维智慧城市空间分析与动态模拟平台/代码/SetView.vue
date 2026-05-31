@@ -3,11 +3,10 @@
         <button @click="setView()" class="functionBtn">定位</button>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
 import * as Cesium from 'cesium'
 
-const props=defineProps({viewer:{type:Object,required:true}});
-const viewer=props.viewer;
+const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
 const setView=()=>
 {
