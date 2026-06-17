@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import * as Cesium from 'cesium';
-import { onMounted, ref } from 'vue';
+import { onMounted,ref} from 'vue';
 import DrawTool from './components/DrawTool.vue';
 import AdjustTool from './components/AdjustTool.vue';
 import Coordinate from './components/Coordinate.vue';
@@ -18,8 +18,7 @@ const viewer=ref<Cesium.Viewer>();
 const tileset=ref<Cesium.Cesium3DTileset>();
 
 onMounted(async()=>{
-  Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY';
-  viewer.value=new Cesium.Viewer('cesiumContainer');
+  Cesium.Ion.defaultAccessToken='您的Token');
   viewer.value.scene.globe.depthTestAgainstTerrain=true;
   const Load=async()=>{
       tileset.value=await Cesium.Cesium3DTileset.fromUrl('/data/da_yan_ta/tileset.json')

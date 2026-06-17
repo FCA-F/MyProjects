@@ -1,17 +1,16 @@
 <template>
     <div class="drawToolbar">
-        <select v-model="drawingMode" style="width:150px;height:30px">
-        <option value=""></option>
-        <option value="point">绘制点</option>
-        <option value="model">绘制模型</option>
-        <option value="line">绘制线</option>
-        <option value="polygon">绘制面</option>
-        <option value="rectangle">绘制矩形</option>
-        <option value="circle">绘制圆</option>
-        <option value="delete">删除</option>
-        </select>
-        <button class="exportBtn" @click="exportEntities()">导出数据</button>
+        <el-select v-model="drawingMode" style="width:250px;height:30px" placeholder="选择绘制要素">
+            <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+            >
+            </el-option>
+        </el-select>
     </div>
+    <el-button class="exportBtn" @click="exportEntities()">导出数据</el-button>
 </template>
 
 <script setup lang="ts">
@@ -20,14 +19,28 @@ import {ref,watch,onMounted,onUnmounted} from 'vue'
 
 const {viewer}=defineProps<{viewer:Cesium.Viewer}>();
 
-const drawingMode=ref<''|'point'|'model'|'line'|'polygon'|'rectangle'|'circle'|'delete'>()
-
 let openDraw=false;
 let dynamicShape:Cesium.Entity|undefined;
 let activeShapePoints:Cesium.Cartesian3[]=[];
 let dynamicPositions:Cesium.CallbackProperty|undefined;
 let tempPoints:Cesium.Entity[]=[];
 let handler:Cesium.ScreenSpaceEventHandler;
+
+
+const options = [
+  { label: "", value: "" },
+  { label: "绘制点", value: "point" },
+  { label: "绘制模型", value: "model" },
+  { label: "绘制线", value: "line" },
+  { label: "绘制面", value: "polygon" },
+  { label: "绘制矩形", value: "rectangle" },
+  { label: "绘制圆", value: "circle" },
+  { label: "删除", value: "delete" },
+]
+
+const drawingMode=ref<''|'point'|'model'|'line'|'polygon'|'rectangle'|'circle'|'delete'>('')
+
+
 
 //绘制点
 const drawPoint=(position:Cesium.Cartesian3):Cesium.Entity=>
@@ -60,7 +73,7 @@ const drawModel=(position:Cesium.Cartesian3):Cesium.Entity=>
 //绘制线和面
 const drawShape=(position:any):Cesium.Entity|undefined=>
 {
-    let shape;
+    let shape:Cesium.Entity|undefined;
     //线
     if(drawingMode.value==='line')
     {
@@ -228,9 +241,19 @@ const generateCircleCoordinates=(centerCartographic:Cesium.Cartographic,radius:n
     return coords;
 }
 
-//导出函数
+//导出
+
+interface GeoJSONFeature{
+    type:"Feature",
+    geometry:{
+        type:'Point'|'LineString'|'Polygon',
+        coordinates:any,
+    },
+    properties:Record<string,any>
+}
+
 const exportEntities=()=>{
-    let features:any[]=[];
+    let features:GeoJSONFeature[]=[];
     let entities=viewer.entities.values;
     let now=Cesium.JulianDate.now();
 
@@ -331,5 +354,5 @@ const exportEntities=()=>{
   
 <style scoped>
   .drawToolbar{position:absolute;top:10px;left:20px;}
-  .exportBtn{position:absolute;top:10px;left:220px;width:100px;height:30px;background:red;color:white;border:none;cursor:pointer}
+  .exportBtn{position:absolute;top:10px;left:280px;width:100px;height:30px;background:red;color:white;border:none;cursor:pointer}
 </style>

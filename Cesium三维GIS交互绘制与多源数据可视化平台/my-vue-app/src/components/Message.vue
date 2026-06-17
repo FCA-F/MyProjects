@@ -1,6 +1,6 @@
 <template>
     <div class="displayMessage">
-        <button  @click="displayMessage" style="width:100px;height:30px">{{ text }}</button>
+        <el-button  @click="displayMessage" style="width:100px;height:30px">{{ text }}</el-button>
     </div>
 </template>
 <script setup lang="ts">
@@ -32,5 +32,5 @@ onMounted(async()=>{
 </script>
 
 <style scoped>
-    .displayMessage{position:absolute;top:600px;left:20px};
+    .displayMessage{position:absolute;top:800px;left:25px};
 </style>
