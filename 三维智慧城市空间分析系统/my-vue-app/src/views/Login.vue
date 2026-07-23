@@ -4,9 +4,6 @@
   <div class="login-page">
     <!-- 登录卡片（居中显示） -->
 
-    <!--仅限作者开发快速登录-->
-    <button @click="router.push({name:'Cesium'})">跳过</button>
-
     <div class="login-card">
       <h2 class="login-title">三维智慧城市系统</h2>
       <!-- 登录表单（带验证规则） -->

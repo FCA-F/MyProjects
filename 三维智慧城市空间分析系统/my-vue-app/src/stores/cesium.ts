@@ -1,12 +1,14 @@
 import {defineStore} from 'pinia'
 import {shallowRef} from 'vue'
 import * as Cesium from 'cesium'
+
 export const useCesiumStore=defineStore('cesium',{
     state:()=>({
         viewer:shallowRef<Cesium.Viewer|undefined>(undefined),
         terrain:shallowRef<Cesium.TerrainProvider|undefined>(undefined),
         osmBuildingTile:shallowRef<Cesium.Cesium3DTileset|undefined>(undefined),
-        annotations:shallowRef<Cesium.LabelCollection|undefined>(undefined)
+        annotations:shallowRef<Cesium.LabelCollection|undefined>(undefined),
+        viewerPosition:{x:114.39564,y:30.52214,z:2000}
     }),
     actions:{
         async initViewer(containerId:string){
@@ -15,7 +17,7 @@ export const useCesiumStore=defineStore('cesium',{
             let osmBuildingTile:Cesium.Cesium3DTileset;
             let annotations:Cesium.LabelCollection;
 
-            Cesium.Ion.defaultAccessToken='您的Token';
+            Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY';
             viewer=new Cesium.Viewer(containerId,{
                 geocoder:false,
                 homeButton:false,
@@ -33,8 +35,9 @@ export const useCesiumStore=defineStore('cesium',{
             osmBuildingTile=await Cesium.createOsmBuildingsAsync();
             viewer.terrainProvider=terrain;
             viewer.scene.primitives.add(osmBuildingTile);
-            viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(114.39564,30.52214,2000)});
-
+            viewer.camera.setView({destination:Cesium.Cartesian3.fromDegrees(
+                this.viewerPosition.x,this.viewerPosition.y,this.viewerPosition.z
+            )});
             this.viewer=viewer;
             this.terrain=terrain;
             this.osmBuildingTile=osmBuildingTile;

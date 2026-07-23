@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import * as Cesium from 'cesium'
 import {ref,watch} from 'vue'
-import {useCesiumStore} from '../../stores/cesium.ts'
+import {useCesiumStore} from '@/stores/cesium.ts'
 
 const cesiumStore=useCesiumStore();
 const viewer=cesiumStore.viewer as Cesium.Viewer;
@@ -77,7 +77,7 @@ const switchAspectMaterial=()=>
     viewer.scene.globe.material=material;
 }
 //绘制坡度画布
-function getSlopeRampCanvas()
+const getSlopeRampCanvas=()=>
 {
     let canvas=document.createElement('canvas');
     canvas.width=100;
@@ -96,7 +96,7 @@ function getSlopeRampCanvas()
     return canvas;
 }
 //绘制坡向画布
-function getAspectRampCanvas()
+const getAspectRampCanvas=()=>
 {
     let canvas=document.createElement('canvas');
     canvas.width=100;

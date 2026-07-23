@@ -2,13 +2,14 @@
     <div class="left-toolbar">
         <Layer/>
         <BuildingRender/>
+        <Weather/>
     </div>
     
 </template>
 <script setup lang="ts">
     import BuildingRender from './LeftToolbar/BuildingRender.vue'
+    import Weather from './LeftToolbar/Weather.vue'
     import Layer from './LeftToolbar/Layer.vue'
-    
 </script>
 <style scoped>
     .left-toolbar{

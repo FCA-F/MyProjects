@@ -82,22 +82,19 @@ const createLabel=(cartesian:Cesium.Cartesian3)=>
             outlineColor:Cesium.Color.YELLOW,
             outlineWidth:2,
             disableDepthTestDistance:1000
+        },
+        label:{
+            text:'Lon: '+lon.toFixed(10)+'\u00B0\n'+
+                    'Lat: '+lat.toFixed(10)+'\u00B0\n'+
+                    'Height: '+height.toFixed(10)+'\u00B0'+'m',
+            showBackground:true,
+            font:'15px',
+            horizontalOrigin:Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin:Cesium.VerticalOrigin.BOTTOM,
+            disableDepthTestDistance:1000
         }
     })
-    //添加标签
-    annotations.add({
-        position:cartesian,
-        text:'Lon: '+lon.toFixed(10)+'\u00B0\n'+
-                'Lat: '+lat.toFixed(10)+'\u00B0\n'+
-                'Height: '+height.toFixed(10)+'\u00B0'+'m',
-        showBackground:true,
-        font:'15px',
-        horizontalOrigin:Cesium.HorizontalOrigin.LEFT,
-        verticalOrigin:Cesium.VerticalOrigin.BOTTOM,
-        disableDepthTestDistance:1000
-    })
 }
-
 //鼠标移动
 const modal=ref();
 const isShow=ref(true);

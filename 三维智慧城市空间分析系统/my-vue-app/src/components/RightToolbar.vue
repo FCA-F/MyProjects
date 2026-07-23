@@ -2,15 +2,15 @@
     <div class="right-toolbar">
         <ScreenShot/>
         <SetView/>
-        <Mask/>
+        <Remove/>
         <RemoveEntities/>
     </div>
 </template>
 <script setup lang="ts">
     import ScreenShot from './RightToolbar/ScreenShot.vue'
     import SetView from './RightToolbar/SetView.vue'
-    import RemoveEntities from './RightToolbar/RemoveEntities.vue'
-    import Mask from './RightToolbar/Mask.vue'
+    import RemoveEntities from './RightToolbar/RemoveAll.vue'
+    import Remove from './RightToolbar/Remove.vue'
 </script>
 <style scoped> 
     .right-toolbar{

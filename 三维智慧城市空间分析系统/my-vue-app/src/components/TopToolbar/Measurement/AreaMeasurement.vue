@@ -24,7 +24,6 @@ import {useCesiumStore} from '../../../stores/cesium.ts'
 
 const cesiumStore=useCesiumStore();
 const viewer=cesiumStore.viewer as Cesium.Viewer;
-const annotations=cesiumStore.annotations as Cesium.LabelCollection;
 let handler:Cesium.ScreenSpaceEventHandler;
 
 const isDraw=ref(false)
@@ -137,14 +136,16 @@ const addPoint=(position:Cesium.Cartesian3)=>{
 
 
 const addLabel=(area:number,position:Cesium.Cartesian3)=>{
-    annotations.add({
+    viewer.entities.add({
         position:position,
-        text:'面积: '+area.toFixed(3)+'平方米',
-        showBackground:true,
-        font:'15px',
-        horizontalOrigin:Cesium.HorizontalOrigin.LEFT,
-        verticalOrigin:Cesium.VerticalOrigin.BOTTOM,
-        disableDepthTestDistance:Number.POSITIVE_INFINITY
+        label:{
+            text:'面积: '+area.toFixed(3)+'平方米',
+            showBackground:true,
+            font:'15px',
+            horizontalOrigin:Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin:Cesium.VerticalOrigin.BOTTOM,
+            disableDepthTestDistance:Number.POSITIVE_INFINITY
+        }    
     })
 }
 

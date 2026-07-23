@@ -19,7 +19,7 @@
             </div>
             <div class="row">
                 <label class="label">类型</label>
-                <el-select v-model="bufferType" :class="['input',bufferType?'red':'']">
+                <el-select v-model="bufferType" :class="['input',bufferType?'red':'']" placeholder="请选择类型">
                     <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value"/>
                 </el-select>
             </div>
@@ -30,7 +30,7 @@
 import * as Cesium from 'cesium'
 import * as turf from '@turf/turf';
 import {ref,onMounted,onUnmounted,watch} from 'vue'
-import {useCesiumStore} from '../../../stores/cesium.ts'
+import {useCesiumStore} from '@/stores/cesium'
 
 let viewer:Cesium.Viewer;
 

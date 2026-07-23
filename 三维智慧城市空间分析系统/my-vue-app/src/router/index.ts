@@ -3,8 +3,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes=[
     {
         path:'/',
-        name:'Home',
-        component:()=>import('../views/Login.vue')
+        name:'Login',
+        component:()=>import('../views/Cesium.vue')//真实路径为../views/Login.vue
     },
     {
         path:'/Cesium',

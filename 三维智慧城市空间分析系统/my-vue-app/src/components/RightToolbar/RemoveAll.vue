@@ -6,13 +6,13 @@
       icon="Delete"
       class="functionBtn"
     >
-      移除
+      清空
     </el-button>
     </div>
 </template>
 <script setup lang="ts">
 import * as Cesium from 'cesium'
-import {useCesiumStore} from '../../stores/cesium.ts'
+import {useCesiumStore} from '@/stores/cesium.ts'
 
 const cesiumStore=useCesiumStore();
 const viewer=cesiumStore.viewer as Cesium.Viewer;

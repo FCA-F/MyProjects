@@ -23,7 +23,7 @@
 <script setup lang="ts">
 import* as Cesium from 'cesium'
 import{ref,onMounted,onUnmounted}from'vue'
-import{useCesiumStore} from '../../stores/cesium.ts'
+import{useCesiumStore} from '@/stores/cesium.ts'
 
 let viewer:Cesium.Viewer;
 

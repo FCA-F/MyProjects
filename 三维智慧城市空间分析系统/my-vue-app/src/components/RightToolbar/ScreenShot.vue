@@ -1,5 +1,7 @@
 <template>
-    <el-button @click="savePicture()" type="primary" class="functionBtn">截图</el-button>
+    <div class="toolbar">
+        <el-button @click="savePicture()" type="primary" class="functionBtn">截图</el-button>
+    </div>
 </template>
 <script setup lang="ts">
 import * as Cesium from 'cesium'
