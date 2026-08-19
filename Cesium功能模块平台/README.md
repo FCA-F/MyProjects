@@ -1,182 +1,495 @@
-1.选型，前端选择RuoYi-Vue3-Vite-TypeScript-ElementPlus，后端使用RuoYi的通用后端
+# RuoYi-Vue3 WebGIS 技术文档
 
-2.安装：
+#### 开发说明
+## 1.位置说明
+程序主页位于src/index.vue
 
-（1）下载前置组件
-JDK
-Maven
-Node.js
-MySQL
-Redis 或 Memurai
-MySQL Workbench
-IDEA
-VS Code
-（2）安装RuoYi
+Cesium功能主页位于src/views/cesium-function/index.vue(样式)
+                 src/views/cesium-function/cards.ts(具体功能)
 
-后端：从https://gitee.com/y_project/RuoYi-Vue下载RuoYi默认后端，
+Cesium各项功能位于src/views/cesium-function
 
-前端：在并列文件夹下载RuoYi(Vue3+ts)前端
-git clone https://gitcode.com/yangzongzhuan/RuoYi-Vue3.git
-cd RuoYi-Vue3
-git checkout typescript
-npm install --registry=https://registry.npmmirror.com
-npm run dev
+Cesium的Viewer创建位于src/components/CesiumMap/CesiumMap.vue
 
-（3）MySQL数据库配置
-打开 MySQL Workbench，连接本地 MySQL：
-Host: 127.0.0.1
-Port: 3306
-User: root
-Password: 自己设置的 MySQL 密码（password）
+Cesium封装通用功能位于src/utils/cesium.ts(viewer初始化)
 
-新建数据库：
-切换到Schemas，右键列表空白处，点Create Schemas，设置名字，参数分别选择utf8mb4和utf8mb4 COLLATE utf8mb4_general_ci。然后右键ry-vue（刚建的那个）设置为默认库（右键选择Set as default Schemas）
-导入数据：
-File -> Open SQL Script -> 选择 sql 文件（ruoyi_admin下的ry_20260417.sql和quartz.sql） -> 点闪电执行
+Cesium功能主页的图片位于src/assets/images/cesium-function
 
-（4）运行
-VsCode运行前端，IDEA运行后端
+## 2.添加Cesium功能说明
+以下步骤顺序无要求
+1.建立vue文件：在src/views/cesium-function中建立.vue文件
 
-问题诊断：报 EACCES: permission denied 0.0.0.0:80
+2.主页面匹配功能：在src/views/cesium-function/cards.ts中增加功能卡片,仅需要增加一句(如
 
-原因:端口权限问题。端口号 80：在 Windows 系统中，80 端口是“特权端口”。普通用户启动的程序默认不能占用 80 端口（通常只有 IIS 等服务能用）。端口冲突：你的电脑上很可能已经有一个程序在占用 80 端口了（比如之前你启动过一次没完全关闭、或者是系统的 IIS 服务、亦或是 VMware 的某些共享服务）。
+  { name: 'buffer-analysis', title: '缓冲区分析', path: '/cesium-function/spatial-analysis/buffer-analysis' })，
 
-解决方案:修改 Vite 端口。我们不让它用 80 端口，换个普通端口（比如 8080 或 3000）。打开项目根目录下的 vite.config.ts 文件。找到 server 配置项。修改为以下内容：
-  server: {
-    port: 8081, // 改成 8081 端口
-  }
+  name：vue文件名字
+  title：标题名字
+  path：路由地址
 
-3.Cesium地图在src/
+  所有功能会自动识别匹配(如路由、图片显示等)
 
+3.设置图片：在src/assets/images/cesium-function功能添加对应的展示图片，名字需要与功能的vue文件名一致
 
+4.在RuoYi网页的 系统管理-菜单管理-Cesium功能 中添加菜单，
 
+## 1. 项目概述
 
+本项目基于 RuoYi-Vue3 TypeScript 前端工程扩展 WebGIS 能力，核心目标是在 RuoYi 后台管理框架中集成 Cesium 三维地球、空间分析、测量工具和系统管理能力。
 
+项目整体采用前后端分离架构：
 
+- 前端：Vue 3、TypeScript、Vite、Element Plus、Pinia、Vue Router。
+- 三维 GIS：CesiumJS、vite-plugin-cesium、Turf。
+- 后端：沿用 RuoYi 通用后端接口体系，前端通过 Axios 封装请求。
+- 构建：Vite 开发服务器与生产构建。
 
+## 2. 技术栈
 
-<p align="center">
-	<img alt="logo" src="https://oscimg.oschina.net/oscnet/up-d3d0a9303e11d522a06cd263f3079027715.png">
-</p>
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">RuoYi v3.9.2</h1>
-<h4 align="center">基于SpringBoot+Vue3前后端分离的Java快速开发框架</h4>
-<p align="center">
-	<a href="https://gitee.com/y_project/RuoYi-Vue/stargazers"><img src="https://gitee.com/y_project/RuoYi-Vue/badge/star.svg?theme=dark"></a>
-	<a href="https://gitee.com/y_project/RuoYi-Vue"><img src="https://img.shields.io/badge/RuoYi-v3.9.2-brightgreen.svg"></a>
-	<a href="https://gitee.com/y_project/RuoYi-Vue/blob/master/LICENSE"><img src="https://img.shields.io/github/license/mashape/apistatus.svg"></a>
-</p>
+| 类型 | 技术 |
+| --- | --- |
+| 前端框架 | Vue 3.5.x |
+| 开发语言 | TypeScript |
+| 构建工具 | Vite 6.x |
+| UI 组件 | Element Plus |
+| 状态管理 | Pinia |
+| 路由 | Vue Router 4 |
+| 三维地图 | Cesium 1.144.x |
+| GIS 计算 | Turf |
+| HTTP 请求 | Axios |
+| 图表 | ECharts |
+| 富文本 | Vue Quill |
+| 样式 | Sass |
 
-## 平台简介
+## 3. 工程目录
 
-* 本仓库为前端技术栈 [TypeScript](https://www.typescriptlang.org) + [Vue3](https://v3.cn.vuejs.org) + [Element Plus](https://element-plus.org/zh-CN) + [Vite](https://cn.vitejs.dev) 版本。
-* 配套后端代码仓库地址[RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue) 或 [RuoYi-Vue-fast](https://gitcode.com/yangzongzhuan/RuoYi-Vue-fast) 版本。
-* 阿里云折扣场：[点我进入](http://aly.ruoyi.vip)，腾讯云秒杀场：[点我进入](http://txy.ruoyi.vip)&nbsp;&nbsp;
-
-# 版本对比
-
-RuoYi-Vue 前端项目的三个主要演进版本，方便你直观对比其技术栈差异（并行开发维护）。
-
-| 项目名称      | **RuoYi-Vue** | **RuoYi-Vue3** | **RuoYi-Vue3-TypeScript**   |
-| :---          | :---          | :---           | :---                        |
-| **前端框架**  | Vue 2        | Vue 3          | Vue 3                       |
-| **脚本语言**  | JavaScript   | JavaScript     | TypeScript                  |
-| **构建工具**  | Vue CLI      | Vite           | Vite                        |
-| **UI 组件库** | Element UI   | Element Plus   | Element Plus                |
-| **状态管理**  | Vuex         | Pinia          | Pinia                       |
-| **路由管理**  | Vue Router 3 | Vue Router 4   | Vue Router 4                |
-| **核心特点**  | 1. 技术栈经典稳定<br>2. 社区资料丰富<br>3. 当前维护重心已转移 | 1. 现代前端技术栈<br>2. 开发体验与性能更优<br>3. 官方主推的活跃版本 | 1. 类型加持，减少沟通成本<br>2. 开发时有提示，效率更高<br>3. 多人协作企业级开发项目 |
-| **仓库地址**  | [RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue) | [RuoYi-Vue3](https://gitcode.com/yangzongzhuan/RuoYi-Vue3) | [RuoYi-Vue3-TypeScript](https://gitcode.com/yangzongzhuan/RuoYi-Vue3/tree/typescript) |
-
-## 前端运行
-
-```bash
-# 克隆项目
-git clone https://gitcode.com/yangzongzhuan/RuoYi-Vue3.git
-
-# 切换typescript分支
-git checkout typescript
-
-# 进入项目目录
-cd RuoYi-Vue3
-
-# 安装依赖
-yarn --registry=https://registry.npmmirror.com
-
-# 启动服务
-yarn dev
-
-# 构建测试环境 yarn build:stage
-# 构建生产环境 yarn build:prod
-# 前端访问地址 http://localhost:80
+```text
+RuoYi-Vue3
+├── public/                         # 静态资源
+├── src/
+│   ├── api/                        # 后端接口模块
+│   ├── assets/                     # 图片、图标、全局样式
+│   ├── components/                 # 通用组件
+│   │   ├── CesiumMap/              # Cesium Viewer 容器组件
+│   │   └── Common/                 # 通用弹窗等业务组件
+│   ├── directives/                 # 自定义指令
+│   ├── layout/                     # RuoYi 主布局
+│   ├── plugins/                    # 插件注册
+│   ├── router/                     # 路由配置
+│   ├── store/                      # RuoYi 状态模块
+│   ├── types/                      # TypeScript 类型声明
+│   ├── utils/                      # 工具方法
+│   │   └── cesium.ts               # Cesium 场景初始化工具
+│   └── views/
+│       ├── cesium-function/        # Cesium 功能主页和业务页面
+│       │   ├── cards.ts            # 功能卡片配置
+│       │   ├── index.vue           # Cesium 功能主页
+│       │   ├── default/            # 默认影像、地形、建筑展示
+│       │   ├── spatial-analysis/   # 空间分析功能
+│       │   └── measurement/        # 测量功能
+│       ├── system/                 # 系统管理
+│       ├── monitor/                # 系统监控
+│       └── tool/                   # 系统工具
+├── vite.config.ts                  # Vite 配置
+├── package.json                    # 依赖与脚本
+└── README.md
 ```
 
-## 内置功能
+## 4. 应用架构
 
-1.  用户管理：用户是系统操作者，该功能主要完成系统用户配置。
-2.  部门管理：配置系统组织机构（公司、部门、小组），树结构展现支持数据权限。
-3.  岗位管理：配置系统用户所属担任职务。
-4.  菜单管理：配置系统菜单，操作权限，按钮权限标识等。
-5.  角色管理：角色菜单权限分配、设置角色按机构进行数据范围权限划分。
-6.  字典管理：对系统中经常使用的一些较为固定的数据进行维护。
-7.  参数管理：对系统动态配置常用参数。
-8.  通知公告：系统通知公告信息发布维护。
-9.  操作日志：系统正常操作日志记录和查询；系统异常信息日志记录和查询。
-10. 登录日志：系统登录日志记录查询包含登录异常。
-11. 在线用户：当前系统中活跃用户状态监控。
-12. 定时任务：在线（添加、修改、删除)任务调度包含执行结果日志。
-13. 代码生成：前后端代码的生成（java、html、xml、sql）支持CRUD下载 。
-14. 系统接口：根据业务代码自动生成相关的api接口文档。
-15. 服务监控：监视当前系统CPU、内存、磁盘、堆栈等相关信息。
-16. 缓存监控：对系统的缓存信息查询，命令统计等。
-17. 在线构建器：拖动表单元素生成相应的HTML代码。
-18. 连接池监视：监视当前系统数据库连接池状态，可进行分析SQL找出系统性能瓶颈。
+### 4.1 页面布局
 
-## 在线体验
+主布局位于 `src/layout/index.vue`，由以下部分组成：
 
-- admin/admin123  
-- 陆陆续续收到一些打赏，为了更好的体验已用于演示服务器升级。谢谢各位小伙伴。
+- `Sidebar`：左侧菜单。
+- `Navbar`：顶部导航。
+- `TagsView`：页签导航。
+- `AppMain`：路由页面渲染区域。
+- `Settings`：主题与布局设置。
 
-演示地址：http://vue.ruoyi.vip  
-文档地址：http://doc.ruoyi.vip
+布局根据窗口宽度自动切换桌面端和移动端状态，移动端打开侧边栏时会显示遮罩层。
 
-## 演示图
+### 4.2 路由体系
 
-<table>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/cd1f90be5f2684f4560c9519c0f2a232ee8.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/1cbcf0e6f257c7d3a063c0e3f2ff989e4b3.jpg"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-8074972883b5ba0622e13246738ebba237a.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-9f88719cdfca9af2e58b352a20e23d43b12.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-39bf2584ec3a529b0d5a3b70d15c9b37646.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-936ec82d1f4872e1bc980927654b6007307.png"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-b2d62ceb95d2dd9b3fbe157bb70d26001e9.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-d67451d308b7a79ad6819723396f7c3d77a.png"/></td>
-    </tr>	 
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/5e8c387724954459291aafd5eb52b456f53.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/644e78da53c2e92a95dfda4f76e6d117c4b.jpg"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-8370a0d02977eebf6dbf854c8450293c937.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-49003ed83f60f633e7153609a53a2b644f7.png"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-d4fe726319ece268d4746602c39cffc0621.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-c195234bbcd30be6927f037a6755e6ab69c.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/b6115bc8c31de52951982e509930b20684a.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-5e4daac0bb59612c5038448acbcef235e3a.png"/></td>
-    </tr>
-</table>
+路由入口位于 `src/router/index.ts`。
 
+路由分为两类：
 
-## 若依前后端分离交流群
+- `constantRoutes`：公共路由，例如登录、首页、404、401、个人中心。
+- `dynamicRoutes`：权限路由，例如用户授权、角色授权、字典数据、调度日志、代码生成配置。
 
-QQ群： [![加入QQ群](https://img.shields.io/badge/已满-937441-blue.svg)](https://jq.qq.com/?_wv=1027&k=5bVB1og) [![加入QQ群](https://img.shields.io/badge/已满-887144332-blue.svg)](https://jq.qq.com/?_wv=1027&k=5eiA4DH) [![加入QQ群](https://img.shields.io/badge/已满-180251782-blue.svg)](https://jq.qq.com/?_wv=1027&k=5AxMKlC) [![加入QQ群](https://img.shields.io/badge/已满-104180207-blue.svg)](https://jq.qq.com/?_wv=1027&k=51G72yr) [![加入QQ群](https://img.shields.io/badge/已满-186866453-blue.svg)](https://jq.qq.com/?_wv=1027&k=VvjN2nvu) [![加入QQ群](https://img.shields.io/badge/已满-201396349-blue.svg)](https://jq.qq.com/?_wv=1027&k=5vYAqA05) [![加入QQ群](https://img.shields.io/badge/已满-101456076-blue.svg)](https://jq.qq.com/?_wv=1027&k=kOIINEb5) [![加入QQ群](https://img.shields.io/badge/已满-101539465-blue.svg)](https://jq.qq.com/?_wv=1027&k=UKtX5jhs) [![加入QQ群](https://img.shields.io/badge/已满-264312783-blue.svg)](https://jq.qq.com/?_wv=1027&k=EI9an8lJ) [![加入QQ群](https://img.shields.io/badge/已满-167385320-blue.svg)](https://jq.qq.com/?_wv=1027&k=SWCtLnMz) [![加入QQ群](https://img.shields.io/badge/已满-104748341-blue.svg)](https://jq.qq.com/?_wv=1027&k=96Dkdq0k) [![加入QQ群](https://img.shields.io/badge/已满-160110482-blue.svg)](https://jq.qq.com/?_wv=1027&k=0fsNiYZt) [![加入QQ群](https://img.shields.io/badge/已满-170801498-blue.svg)](https://jq.qq.com/?_wv=1027&k=7xw4xUG1) [![加入QQ群](https://img.shields.io/badge/已满-108482800-blue.svg)](https://jq.qq.com/?_wv=1027&k=eCx8eyoJ) [![加入QQ群](https://img.shields.io/badge/已满-101046199-blue.svg)](https://jq.qq.com/?_wv=1027&k=SpyH2875) [![加入QQ群](https://img.shields.io/badge/已满-136919097-blue.svg)](https://jq.qq.com/?_wv=1027&k=tKEt51dz) [![加入QQ群](https://img.shields.io/badge/已满-143961921-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=0vBbSb0ztbBgVtn3kJS-Q4HUNYwip89G&authKey=8irq5PhutrZmWIvsUsklBxhj57l%2F1nOZqjzigkXZVoZE451GG4JHPOqW7AW6cf0T&noverify=0&group_code=143961921) [![加入QQ群](https://img.shields.io/badge/已满-174951577-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ZFAPAbp09S2ltvwrJzp7wGlbopsc0rwi&authKey=HB2cxpxP2yspk%2Bo3WKTBfktRCccVkU26cgi5B16u0KcAYrVu7sBaE7XSEqmMdFQp&noverify=0&group_code=174951577) [![加入QQ群](https://img.shields.io/badge/已满-161281055-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Fn2aF5IHpwsy8j6VlalNJK6qbwFLFHat&authKey=uyIT%2B97x2AXj3odyXpsSpVaPMC%2Bidw0LxG5MAtEqlrcBcWJUA%2FeS43rsF1Tg7IRJ&noverify=0&group_code=161281055) [![加入QQ群](https://img.shields.io/badge/已满-138988063-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=XIzkm_mV2xTsUtFxo63bmicYoDBA6Ifm&authKey=dDW%2F4qsmw3x9govoZY9w%2FoWAoC4wbHqGal%2BbqLzoS6VBarU8EBptIgPKN%2FviyC8j&noverify=0&group_code=138988063) [![加入QQ群](https://img.shields.io/badge/已满-151450850-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=DkugnCg68PevlycJSKSwjhFqfIgrWWwR&authKey=pR1Pa5lPIeGF%2FFtIk6d%2FGB5qFi0EdvyErtpQXULzo03zbhopBHLWcuqdpwY241R%2F&noverify=0&group_code=151450850) [![加入QQ群](https://img.shields.io/badge/已满-224622315-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=F58bgRa-Dp-rsQJThiJqIYv8t4-lWfXh&authKey=UmUs4CVG5OPA1whvsa4uSespOvyd8%2FAr9olEGaWAfdLmfKQk%2FVBp2YU3u2xXXt76&noverify=0&group_code=224622315) [![加入QQ群](https://img.shields.io/badge/已满-287842588-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Nxb2EQ5qozWa218Wbs7zgBnjLSNk_tVT&authKey=obBKXj6SBKgrFTJZx0AqQnIYbNOvBB2kmgwWvGhzxR67RoRr84%2Bus5OadzMcdJl5&noverify=0&group_code=287842588) [![加入QQ群](https://img.shields.io/badge/已满-187944233-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=numtK1M_I4eVd2Gvg8qtbuL8JgX42qNh&authKey=giV9XWMaFZTY%2FqPlmWbkB9g3fi0Ev5CwEtT9Tgei0oUlFFCQLDp4ozWRiVIzubIm&noverify=0&group_code=187944233) [![加入QQ群](https://img.shields.io/badge/已满-228578329-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=G6r5KGCaa3pqdbUSXNIgYloyb8e0_L0D&authKey=4w8tF1eGW7%2FedWn%2FHAypQksdrML%2BDHolQSx7094Agm7Luakj9EbfPnSTxSi2T1LQ&noverify=0&group_code=228578329) [![加入QQ群](https://img.shields.io/badge/已满-191164766-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=GsOo-OLz53J8y_9TPoO6XXSGNRTgbFxA&authKey=R7Uy%2Feq%2BZsoKNqHvRKhiXpypW7DAogoWapOawUGHokJSBIBIre2%2FoiAZeZBSLuBc&noverify=0&group_code=191164766) [![加入QQ群](https://img.shields.io/badge/已满-174569686-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=PmYavuzsOthVqfdAPbo4uAeIbu7Ttjgc&authKey=p52l8%2FXa4PS1JcEmS3VccKSwOPJUZ1ZfQ69MEKzbrooNUljRtlKjvsXf04bxNp3G&noverify=0&group_code=174569686) [![加入QQ群](https://img.shields.io/badge/127358632-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=M9y5NjAl44lAL_Vh2crmEehZU_PMU6KS&authKey=ZSDz8hEREWSaPuxQV3gEwqGIaGjfRNnkB4rJjf0IvXhrSUGSGwQFmBA%2Boe8HFxyl&noverify=0&group_code=127358632) 点击按钮入群。
+业务菜单通常由后端权限菜单返回并动态挂载，前端路由组件按 `component: () => import(...)` 方式懒加载。
+
+### 4.3 状态管理
+
+项目使用 Pinia 作为状态管理工具。
+
+常见状态包括：
+
+- 用户信息与权限。
+- 侧边栏展开状态。
+- 主题色、TagsView、固定头部等布局设置。
+- 字典缓存。
+
+Cesium 页面目前主要通过页面局部状态管理 `viewer`、绘制对象、分析参数和显示状态。
+
+## 5. Cesium 功能架构
+
+### 5.1 CesiumMap 组件
+
+`src/components/CesiumMap/CesiumMap.vue` 是 Cesium Viewer 的基础容器组件。
+
+职责：
+
+- 渲染地图容器 `<div class="map">`。
+- 在 `onMounted` 中创建 `Cesium.Viewer`。
+- 关闭默认控件，例如 geocoder、timeline、animation、baseLayerPicker。
+- 创建完成后通过 `emit('ready', viewer)` 把 Viewer 实例交给业务页面。
+- 在 `onBeforeUnmount` 中销毁 Viewer，避免 WebGL 上下文泄漏。
+
+业务页面一般按以下方式接收 Viewer：
+
+```vue
+<CesiumMap @ready="onMapReady" />
+```
+
+```ts
+const onMapReady = (cesiumViewer: Cesium.Viewer) => {
+  viewer = cesiumViewer
+}
+```
+
+### 5.2 Cesium 初始化工具
+
+`src/utils/cesium.ts` 中的 `initCesiumBase` 负责统一初始化 Cesium 场景。
+
+主要能力：
+
+- 设置相机位置和视角。
+- 加载 Cesium World Terrain。
+- 加载 OSM Buildings。
+- 设置地形深度检测。
+- 设置光照、阴影和时间动画。
+
+空间分析中有两个重要参数：
+
+- `terrain: true`：启用真实地形。
+- `requestVertexNormals: true`：请求地形法线，坡度分析和坡向分析依赖该参数。
+
+坡度和坡向分析使用 Cesium 内置材质 `SlopeRamp`、`AspectRamp`，这类材质依赖地形法线。未开启 `requestVertexNormals` 时，材质虽然能设置成功，但画面可能没有预期效果。
+
+### 5.3 Cesium 功能主页
+
+`src/views/cesium-function/index.vue` 是 Cesium 功能入口页。
+
+功能卡片数据来自 `src/views/cesium-function/cards.ts`，图片通过 `import.meta.glob` 从以下目录自动导入：
+
+```text
+src/assets/images/cesiumFunction/*.png
+```
+
+新增功能卡片时需要同时补充：
+
+1. 功能页面。
+2. 路由或菜单路径。
+3. `cards.ts` 中的卡片配置。
+4. 同名图片资源。
+
+例如：
+
+```ts
+{ name: 'slope-analysis', title: '坡度分析', path: '/cesium-function/spatial-analysis/slope-analysis' }
+```
+
+对应图片：
+
+```text
+src/assets/images/cesiumFunction/slope-analysis.png
+```
+
+### 5.4 默认场景模块
+
+目录：
+
+```text
+src/views/cesium-function/default/
+```
+
+包含：
+
+- `default-imagery.vue`：默认影像展示。
+- `default-terrain.vue`：默认地形展示。
+- `default-osm.vue`：OSM 建筑展示。
+
+这些页面主要验证 Cesium 基础能力，包括影像、地形和 3D Tiles 建筑加载。
+
+### 5.5 空间分析模块
+
+目录：
+
+```text
+src/views/cesium-function/spatial-analysis/
+```
+
+主要功能：
+
+| 页面 | 功能 |
+| --- | --- |
+| `inundation-analysis.vue` | 淹没分析 |
+| `viewshed-terrain-analysis.vue` | 地形可视域分析 |
+| `viewshed-model-analysis.vue` | 模型可视域分析 |
+| `contour-analysis.vue` | 等高线分析 |
+| `slope-analysis.vue` | 坡度分析 |
+| `aspect-analysis.vue` | 坡向分析 |
+| `buffer-analysis.vue` | 缓冲区分析 |
+
+关键实现方式：
+
+- 等高线使用 `Cesium.Material.fromType('ElevationContour')`。
+- 坡度分析使用 `Cesium.Material.fromType('SlopeRamp')`。
+- 坡向分析使用 `Cesium.Material.fromType('AspectRamp')`。
+- 地形、坡度、坡向类分析需要真实地形和地形法线支持。
+- 交互类分析通过 Cesium 事件处理器监听鼠标点击、移动和绘制动作。
+
+### 5.6 测量模块
+
+目录：
+
+```text
+src/views/cesium-function/measurement/
+```
+
+主要功能：
+
+- `coordinate-measurement.vue`：坐标拾取。
+- `distance-measurement.vue`：距离测量。
+- `area-measurement.vue`：面积测量。
+
+这类页面通常依赖：
+
+- `ScreenSpaceEventHandler` 监听鼠标事件。
+- `viewer.scene.pickPosition` 或 `viewer.camera.pickEllipsoid` 获取空间位置。
+- `Entity`、`Label`、`Polyline`、`Polygon` 显示测量结果。
+
+## 6. 数据与请求流程
+
+系统管理、监控、工具等 RuoYi 原生模块通过 `src/api/` 封装接口，统一走 Axios 请求工具。
+
+典型流程：
+
+```text
+Vue 页面
+  -> api 模块方法
+  -> request 工具封装
+  -> 后端 RuoYi 接口
+  -> 返回数据
+  -> 页面表格、表单、图表渲染
+```
+
+Cesium 空间分析功能多数在前端完成，主要依赖 Cesium 场景对象、地形数据和用户交互，不一定需要后端接口参与。
+
+## 7. 开发与运行
+
+### 7.1 安装依赖
+
+```bash
+npm install --registry=https://registry.npmmirror.com
+```
+
+### 7.2 启动开发环境
+
+```bash
+npm run dev
+```
+
+本项目 Vite 服务端口以 `vite.config.ts` 中配置为准。若 80 端口权限不足，建议改为 8081 等普通端口。
+
+### 7.3 生产构建
+
+```bash
+npm run build:prod
+```
+
+### 7.4 测试环境构建
+
+```bash
+npm run build:stage
+```
+
+### 7.5 本地预览构建结果
+
+```bash
+npm run preview
+```
+
+## 8. 新增 Cesium 功能页面流程
+
+1. 在对应目录新增页面，例如：
+
+```text
+src/views/cesium-function/spatial-analysis/example-analysis.vue
+```
+
+2. 页面中引入基础地图组件：
+
+```ts
+import * as Cesium from 'cesium'
+import CesiumMap from '@/components/CesiumMap/CesiumMap.vue'
+import { initCesiumBase } from '@/utils/cesium'
+```
+
+3. 在 `onMapReady` 中初始化场景：
+
+```ts
+const onMapReady = async (cesiumViewer: Cesium.Viewer) => {
+  viewer = cesiumViewer
+
+  await initCesiumBase(viewer, {
+    destination: { lng: 117.12043, lat: 36.68173, height: 2000 },
+    orientation: { heading: 140, pitch: -30, roll: 0 },
+    terrain: true,
+    requestVertexNormals: true,
+    depthTestAgainstTerrain: true,
+  })
+}
+```
+
+4. 在 `cards.ts` 中补充功能卡片。
+
+5. 在 `src/assets/images/cesiumFunction/` 下放入与 `name` 同名的预览图。
+
+6. 配置对应菜单或路由路径，保证 `router.push(item.path)` 能访问页面。
+
+## 9. 关键注意事项
+
+### 9.1 Cesium Ion Token
+
+当前 `CesiumMap.vue` 中直接写入了 `Cesium.Ion.defaultAccessToken`。从维护角度看，建议后续迁移到环境变量中，例如：
+
+```text
+VITE_CESIUM_ION_TOKEN=xxxx
+```
+
+然后在代码中读取：
+
+```ts
+Cesium.Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN
+```
+
+这样可以避免 Token 暴露在源码中，也便于不同环境切换。
+
+### 9.2 地形法线
+
+坡度分析和坡向分析必须在创建地形时开启：
+
+```ts
+await Cesium.createWorldTerrainAsync({
+  requestVertexNormals: true,
+})
+```
+
+不要在地形创建完成后再写：
+
+```ts
+terrainProvider.requestVertexNormals = true
+```
+
+该方式通常不会生效，并且可能触发类型或运行时错误。
+
+### 9.3 异步初始化顺序
+
+`initCesiumBase` 是异步函数。业务页面如果依赖 terrain、OSM Buildings 或其他异步资源，应使用 `await`：
+
+```ts
+await initCesiumBase(viewer, options)
+```
+
+如果不等待，后续材质设置、分析计算或相机定位可能发生在资源加载完成之前。
+
+### 9.4 材质作用范围
+
+`viewer.scene.globe.material` 只作用于地球表面，不会直接作用于 OSM Buildings 或其他 3D Tiles 模型。
+
+因此坡度、坡向、等高线等地形材质在建筑密集区域可能被模型遮挡，看起来像没有生效。调试时建议先切到山地区域或关闭建筑图层。
+
+### 9.5 组件销毁
+
+创建 `ScreenSpaceEventHandler`、Primitive、Entity、PostProcessStage 等对象后，应在组件卸载或清除按钮中释放：
+
+- `handler.destroy()`
+- `viewer.entities.remove(...)`
+- `viewer.scene.primitives.remove(...)`
+- `viewer.scene.globe.material = undefined`
+
+避免多次进入页面后事件重复触发或内存泄漏。
+
+## 10. 代码规范建议
+
+- Cesium Viewer 实例统一命名为 `viewer`，并在 `onMapReady` 后使用。
+- 页面级临时对象使用 `let` 存储，清除逻辑集中在 `clear` 或 `remove` 方法中。
+- 需要用户输入的分析参数使用 `ref`，多个参数联动时使用 `watch([a, b], callback)`。
+- 与地形相关的功能在初始化参数中明确标注 `terrain: true` 和 `requestVertexNormals: true`。
+- 新增功能卡片时保证 `cards.ts` 的 `name` 与图片文件名一致。
+- 不要把 Cesium Token、后端地址、账号密码硬编码在业务组件中。
+
+## 11. 部署说明
+
+生产环境构建后生成静态资源，可部署到 Nginx、IIS 或其他静态服务中。
+
+需要注意：
+
+- 前端接口代理在生产环境不会自动生效，需要由 Nginx 或后端网关配置。
+- 如果使用 history 路由，需要服务端配置回退到 `index.html`。
+- Cesium 静态资源由 `vite-plugin-cesium` 处理，构建后应确认 `Workers`、`Assets`、`Widgets` 等资源路径正常。
+- 网络环境需要能访问 Cesium Ion 相关服务，或替换为本地/私有地形和影像服务。
+
+## 12. 常见问题
+
+### 12.1 坡度或坡向材质设置成功但画面没变化
+
+检查：
+
+1. 是否启用了真实地形。
+2. 创建地形时是否传入 `requestVertexNormals: true`。
+3. 是否等待 `initCesiumBase` 完成。
+4. 当前视角是否被 OSM Buildings 或 3D Tiles 遮挡。
+5. 是否正在看平坦区域，坡度变化不明显。
+
+### 12.2 功能主页卡片没有图片
+
+检查：
+
+1. `cards.ts` 中 `name` 是否正确。
+2. `src/assets/images/cesiumFunction/` 下是否存在同名 PNG。
+3. 文件扩展名是否为 `.png`。
+4. Vite 是否已重新加载资源。
+
+### 12.3 页面切换后事件重复触发
+
+通常是事件处理器没有销毁。需要在清除函数或 `onBeforeUnmount` 中执行：
+
+```ts
+if (handler) {
+  handler.destroy()
+}
+```
+
+### 12.4 80 端口启动失败
+
+Windows 下 80 端口可能需要管理员权限或已被其他程序占用。建议在 `vite.config.ts` 中将端口改为 8081：
+
+```ts
+server: {
+  port: 8081,
+}
+```
+
+## 13. 后续优化建议
+
+- 把 Cesium Ion Token 移入环境变量。
+- 将空间分析公共逻辑提取为 composable，例如 `useCesiumViewer`、`useDrawPolygon`、`useTerrainMaterial`。
+- 为 Cesium 分析功能增加统一清除接口。
+- 为坡度、坡向、等高线增加图例和参数校验。
+- 抽离功能卡片配置与路由配置，减少重复维护。
+- 为测量和绘制功能增加单元测试或最小交互测试。
+- 统一中文编码，避免 README 或页面文案出现乱码。
