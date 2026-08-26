@@ -3,50 +3,54 @@
 </template>
 <script setup lang="ts">
 import * as Cesium from 'cesium'
-import {ref,onMounted,onBeforeUnmount} from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 //请输入您的密钥
-Cesium.Ion.defaultAccessToken='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY'
+Cesium.Ion.defaultAccessToken = '请输入您的密钥'
 
-let viewer:Cesium.Viewer|null
+let viewer: Cesium.Viewer | null
 
-const cesiumContainer=ref<HTMLDivElement|null>(null)
+const cesiumContainer = ref<HTMLDivElement | null>(null)
 
-const emit=defineEmits<{
-    (e:'ready',viewer:Cesium.Viewer):void
+const emit = defineEmits<{
+    (e: 'ready', viewer: Cesium.Viewer): void
 }>()
 
-onMounted(()=>{
-    if(!cesiumContainer.value){
+onMounted(() => {
+    if (!cesiumContainer.value) {
         console.log('Cesium容器加载失败')
         return
     }
 
     //创建viewer
-    viewer=new Cesium.Viewer(cesiumContainer.value,{
-        geocoder:false,
-        homeButton:false,
-        sceneModePicker:false,
-        baseLayerPicker:false,
-        navigationHelpButton:false,
-        animation:false,
-        timeline:false,
-        fullscreenButton:false,
-    })
+    viewer = new Cesium.Viewer(cesiumContainer.value, {
+        geocoder: false,
+        homeButton: false,
+        sceneModePicker: false,
+        baseLayerPicker: false,
+        navigationHelpButton: false,
+        animation: false,
+        timeline: false,
+        fullscreenButton: false,
+    });
+
+    (viewer.cesiumWidget.creditContainer as any).style.display = "none";//关掉cesium标识
 
     console.log('viewer加载完成')
 
-    emit('ready',viewer)
-    }
+    emit('ready', viewer)
+}
 )
-onBeforeUnmount(()=>{
-    if(viewer)
-    {
+onBeforeUnmount(() => {
+    if (viewer) {
         viewer.destroy()
-        viewer=null
+        viewer = null
     }
 })
 </script>
 <style scoped>
-.map{height:100%;width:100%}
+.map {
+    height: 100%;
+    width: 100%
+}
 </style>

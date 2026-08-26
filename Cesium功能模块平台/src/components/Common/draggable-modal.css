@@ -109,3 +109,11 @@
         transform: rotate(360deg);
     }
 }
+
+/* 底部状态文字 */
+.status {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #606266;
+    line-height: 20px;
+}

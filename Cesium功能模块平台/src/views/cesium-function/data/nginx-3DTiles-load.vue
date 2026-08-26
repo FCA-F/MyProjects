@@ -17,7 +17,7 @@ let tileset:Cesium.Cesium3DTileset
 const onMapReady=async (cesiumViewer:Cesium.Viewer)=>{
     viewer=cesiumViewer
 
-    tileset=await Cesium.Cesium3DTileset.fromUrl("http://localhost:82/tiles/tileset.json")
+    tileset=await Cesium.Cesium3DTileset.fromUrl("http://localhost:82/daYanTa/tileset.json")
     viewer.scene.primitives.add(tileset)
     viewer.zoomTo(tileset)
 }
@@ -91,12 +91,14 @@ server {
 双击：nginx.exe
 
 如果新建或更改文件配置需在cmd输入nginx -s reload
+如果启动了多个nginx.exe，输入taskkill /F /IM nginx.exe关闭，否则线程被占用
 
 六、访问测试
 
 浏览器打开：
 
 http://localhost:82/tiles/tileset.json。如果能看到 JSON 内容，说明发布成功。
+http://localhost:82/daYanTa/tileset.json
 
 七、Cesium 中加载
 

@@ -3,7 +3,9 @@
         <CesiumMap @ready="onMapReady" />
         <DraggableModal title="限高分析">
             <div class="row">
-                <el-button @click="switchEffect" class="draw-button" :color="isShow?'red':'green'">{{ isShow?'消除':'开启' }}</el-button>
+                <el-button @click="switchEffect" class="draw-button" :color="isShow ? 'red' : 'green'">{{ isShow ? '消除'
+                    : '开启'
+                    }}</el-button>
             </div>
             <div class="row">
                 <span class="label">限高</span>
@@ -12,7 +14,7 @@
             </div>
             <div class="row">
                 <label class="label">限高线</label>
-                <el-switch v-model="isDrawLine"/>
+                <el-switch v-model="isDrawLine" />
             </div>
         </DraggableModal>
     </div>
@@ -22,55 +24,55 @@
 import * as Cesium from 'cesium'
 import CesiumMap from '@/components/CesiumMap/CesiumMap.vue'
 import DraggableModal from '@/components/Common/draggable-modal.vue'
-import {initCesiumBase} from '@/utils/cesium'
+import { initCesiumBase } from '@/utils/cesium'
 import '@/components/Common/draggable-modal.css'
 
-let viewer:Cesium.Viewer
-let osmBuildings:Cesium.Cesium3DTileset|undefined
+let viewer: Cesium.Viewer
+let osmBuildings: Cesium.Cesium3DTileset | undefined
 
-const isShow=ref(false)
-const isDrawLine=ref(true)
-const limitHeight=ref(50)
-const groundHeight=ref(22)
+const isShow = ref(false)
+const isDrawLine = ref(true)
+const limitHeight = ref(50)
+const groundHeight = ref(22)
 
 
-const onMapReady=async(cesiumViewer:Cesium.Viewer)=>{
-    viewer=cesiumViewer
+const onMapReady = async (cesiumViewer: Cesium.Viewer) => {
+    viewer = cesiumViewer
 
-    const result=await initCesiumBase(viewer,{
-        destination:{lng: 114.40740,lat: 30.50721,height:1000},
-        orientation:{heading:185,pitch:-30,roll:0},
-        terrain:true,
-        osm:true,
-        depthTestAgainstTerrain:true,
+    const result = await initCesiumBase(viewer, {
+        destination: { lng: 114.40740, lat: 30.50721, height: 1000 },
+        orientation: { heading: 185, pitch: -30, roll: 0 },
+        terrain: true,
+        osm: true,
+        depthTestAgainstTerrain: true,
     })
 
-    osmBuildings=result?.osmBuildings
+    osmBuildings = result?.osmBuildings
 }
-const openEffect=()=>{
-    if(!osmBuildings) return
+const openEffect = () => {
+    if (!osmBuildings) return
     osmBuildings.showOutline = false
     const customShader = new Cesium.CustomShader({
-    //考虑光照模型
-    lightingModel: Cesium.LightingModel.PBR,
-    uniforms:{
-        groundHeight:{type:Cesium.UniformType.FLOAT,value:groundHeight.value},
-        limitHeight:{type:Cesium.UniformType.FLOAT,value:limitHeight.value},//基准高度
-        isDrawLine:{type:Cesium.UniformType.BOOL,value:isDrawLine.value},
-        normalColor: {
-            type: Cesium.UniformType.VEC3,
-            value: Cesium.Color.GREEN
+        //考虑光照模型
+        lightingModel: Cesium.LightingModel.PBR,
+        uniforms: {
+            groundHeight: { type: Cesium.UniformType.FLOAT, value: groundHeight.value },
+            limitHeight: { type: Cesium.UniformType.FLOAT, value: limitHeight.value },//基准高度
+            isDrawLine: { type: Cesium.UniformType.BOOL, value: isDrawLine.value },
+            normalColor: {
+                type: Cesium.UniformType.VEC3,
+                value: Cesium.Color.GREEN
+            },
+            overColor: {
+                type: Cesium.UniformType.VEC3,
+                value: Cesium.Color.RED
+            },
+            lineColor: {
+                type: Cesium.UniformType.VEC3,
+                value: Cesium.Color.YELLOW
+            }
         },
-        overColor: {
-            type: Cesium.UniformType.VEC3,
-            value: Cesium.Color.RED
-        },
-        lineColor: {
-            type: Cesium.UniformType.VEC3,
-            value: Cesium.Color.YELLOW
-        }
-    },
-    fragmentShaderText: `
+        fragmentShaderText: `
         void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material) {  //参数：信息结构体、材质
             //像点相对地面高度
             float relativeHeight = fsInput.attributes.positionMC.z-groundHeight;  //像点高度-地面高度=像点相对高度
@@ -92,27 +94,27 @@ const openEffect=()=>{
             positionWC:世界坐标（地球坐标）
             positionEC:相机坐标
         */
-      });
-      //将定义好的着色器作用域建筑tilesets
-      osmBuildings.customShader = customShader;
+    });
+    //将定义好的着色器作用域建筑tilesets
+    osmBuildings.customShader = customShader;
 }
-const closeEffect=()=>{
-    if(!osmBuildings) return
+const closeEffect = () => {
+    if (!osmBuildings) return
     osmBuildings.showOutline = true
-    osmBuildings.customShader=undefined
+    osmBuildings.customShader = undefined
 }
-const switchEffect=()=>{
-    if(isShow.value){
-        isShow.value=false
+const switchEffect = () => {
+    if (isShow.value) {
+        isShow.value = false
         closeEffect()
     }
-    else{
-        isShow.value=true
+    else {
+        isShow.value = true
         openEffect()
     }
 }
 
-watch(isDrawLine,(isDrawLine)=>{
+watch(isDrawLine, (isDrawLine) => {
     openEffect()
 })
 
@@ -124,7 +126,7 @@ watch(isDrawLine,(isDrawLine)=>{
 </script>
 <style scoped>
 .page-container {
-  width: 100%;
-  height: 100%;
+    width: 100%;
+    height: 100%;
 }
 </style>

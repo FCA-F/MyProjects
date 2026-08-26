@@ -2,12 +2,9 @@
   <div class="page-container">
     <CesiumMap @ready="onMapReady"/>
     <DraggableModal title="PostGIS载入">
-        <div class="row">
-            <label>属性</label>
-        </div>
         <div v-if="selectObject" class="modal-body">
             <div class="row">
-                <span class="label">名称:</span>
+                <span class="label">区域:</span>
                 <span class="label">{{ selectName }}</span>
             </div>
         </div>
@@ -85,11 +82,16 @@ const loadRegionMVT=async()=>{
     }
 
     handler.setInputAction((e:Cesium.ScreenSpaceEventHandler.PositionedEvent)=>{
-        let pickObject=viewer.scene.pick(e.position)
-        if(pickObject){
-            selectObject.value=pickObject
-            selectName.value=pickObject.getProperty('name')
-            updateStyle()
+        let pickObjects=viewer.scene.drillPick(e.position)//穿透采集，防止误采到线
+        if(pickObjects.length>0){
+            for(const pickObject of pickObjects){
+                if(pickObject.tileset==regionMVT.tileset){
+                    selectObject.value=pickObject
+                    selectName.value=pickObject.getProperty('name')
+                    updateStyle()
+                    break
+                }
+            }
         }
         else{
             selectName.value=undefined
