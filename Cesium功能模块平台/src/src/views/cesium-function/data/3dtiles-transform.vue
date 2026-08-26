@@ -1,0 +1,125 @@
+<template>
+    <div class="page-container">
+        <CesiumMap @ready="onMapReady" />
+        <DraggableModal title="3DTiles仿射变换">
+            <!--高度-->
+            <div class="lable">高度</div>
+            <el-slider v-model.number="height" :min="-500" :max="500" :step="1" class="slider-input" show-input></el-slider>
+            
+            <!--X轴旋转-->
+            <div class="lable">X轴旋转</div>
+            <el-slider v-model.number="rx" :min="-100" :max="100" :step="1" class="slider-input" show-input></el-slider>
+            
+            <!--Y轴旋转-->
+            <div class="lable">Y轴旋转</div>
+            <el-slider v-model.number="ry" :min="-100" :max="100" :step="1" class="slider-input" show-input></el-slider>
+
+            <!--Z轴旋转-->
+            <div class="lable">Z轴旋转</div>
+            <el-slider v-model.number="rz" :min="-100" :max="100" :step="1" class="slider-input" show-input></el-slider>
+
+            <!--经度平移-->
+            <div class="lable">经度平移</div>
+            <el-slider v-model.number="tLon" :min="-100" :max="100" :step="1" class="slider-input" show-input></el-slider>
+
+            <!--纬度平移-->
+            <div class="lable">维度平移</div>
+            <el-slider v-model.number="tLat" :min="-100" :max="100" :step="1" class="slider-input" show-input></el-slider>
+
+            <!--缩放-->
+            <div class="lable">缩放</div>
+            <el-slider v-model.number="scale" :min="0.1" :max="10" :step="0.01" class="slider-input" show-input></el-slider>
+        </DraggableModal>
+    </div>
+</template>
+
+<script setup lang="ts">
+import * as Cesium from 'cesium'
+import CesiumMap from '@/components/CesiumMap/CesiumMap.vue'
+import DraggableModal from '@/components/Common/draggable-modal.vue'
+import {initCesiumBase} from '@/utils/cesium'
+import '@/components/Common/draggable-modal.css'
+
+let viewer:Cesium.Viewer
+let tileset:Cesium.Cesium3DTileset
+
+const height=ref(0);
+const tLon=ref(0),tLat=ref(0),rx=ref(0),ry=ref(0),rz=ref(0);
+const scale=ref(1);
+let starCartographic: Cesium.Cartographic;
+let mStar: Cesium.Matrix4;
+
+interface ModelParams {
+  x: number
+  y: number
+  z: number
+}
+let params: ModelParams = { x: 0, y: 0, z: 0 };
+
+const onMapReady=async (cesiumViewer:Cesium.Viewer)=>{
+    viewer=cesiumViewer
+    tileset=await Cesium.Cesium3DTileset.fromUrl("http://localhost:82/daYanTa/tileset.json")
+    viewer.scene.primitives.add(tileset)
+    viewer.zoomTo(tileset)
+
+    starCartographic=Cesium.Cartographic.fromCartesian(tileset.boundingSphere.center);
+    //获取模型中心坐标（弧度=>经纬度）
+    params = {
+        x: Cesium.Math.toDegrees(starCartographic.longitude),
+        y: Cesium.Math.toDegrees(starCartographic.latitude),
+        z: starCartographic.height
+    }
+    //获取模型矩阵
+    mStar = tileset.root.transform
+}
+
+watch(height, (height) => {
+  if (isNaN(height))
+    return;
+  let surface = Cesium.Cartesian3.fromRadians(
+    starCartographic.longitude,
+    starCartographic.latitude
+  )
+  let offset = Cesium.Cartesian3.fromRadians(
+    starCartographic.longitude,
+    starCartographic.latitude,
+    height
+  )
+  let translation = Cesium.Cartesian3.subtract(
+    offset,
+    surface,
+    new Cesium.Cartesian3()
+  )
+  tileset.modelMatrix = Cesium.Matrix4.fromTranslation(translation);
+})
+watch([tLon, tLat, rx, ry, rz], ([tLon, tLat, rx, ry, rz]) => {
+  params.x = Cesium.Math.toDegrees(starCartographic.longitude) + tLon / 10000;
+  params.y = Cesium.Math.toDegrees(starCartographic.latitude) + tLat / 10000;
+  let mrx3 = Cesium.Matrix3.fromRotationX(Cesium.Math.toRadians(rx));
+  let mry3 = Cesium.Matrix3.fromRotationY(Cesium.Math.toRadians(ry));
+  let mrz3 = Cesium.Matrix3.fromRotationZ(Cesium.Math.toRadians(rz));
+  let mrx4 = Cesium.Matrix4.fromRotationTranslation(mrx3);
+  let mry4 = Cesium.Matrix4.fromRotationTranslation(mry3);
+  let mrz4 = Cesium.Matrix4.fromRotationTranslation(mrz3);
+  let center = Cesium.Cartesian3.fromDegrees(params.x, params.y, params.z);
+  let m = Cesium.Transforms.eastNorthUpToFixedFrame(center);
+  Cesium.Matrix4.multiply(m,mrx4,m);
+  Cesium.Matrix4.multiply(m,mry4,m);
+  Cesium.Matrix4.multiply(m,mrz4,m);
+  tileset.root.transform = m;
+})
+watch(scale, (scale) => {
+  let mScale = Cesium.Matrix4.fromUniformScale(scale);
+  let m = Cesium.Matrix4.multiply(mStar, mScale, new Cesium.Matrix4());
+  tileset.root.transform = m;
+})
+
+
+</script>
+<style scoped>
+.page-container {
+  width: 100%;
+  height: 100%;
+}
+</style>
+
