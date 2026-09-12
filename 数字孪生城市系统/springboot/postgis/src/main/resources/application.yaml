@@ -1,0 +1,32 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: postgis
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/jinan
+    username: postgres
+    password: Fca20041005
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+geoserver:
+  base-url: http://localhost:8083/geoserver
+  username: admin
+  password: geoserver
+  gwc:
+    layer: JINAN:jinan_road
+    format: application/vnd.mapbox-vector-tile
+    grid-set-id: EPSG:900913
+    zoom-start: 10
+    zoom-stop: 14
+
+jwt:
+  secretKey: bXktbGlicmFyeS1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcw==
+  expire-hours: 2
