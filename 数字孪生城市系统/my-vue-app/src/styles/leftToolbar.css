@@ -1,0 +1,28 @@
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.oneText {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: #45a0eb;
+    margin-bottom: 8px;
+}
+
+:deep(.radio) {
+    display: flex !important;
+    gap: 1px;
+    /*单选横向间距*/
+}
+
+.contourSpaceTitle {
+    font-size: 16px;
+    margin: 4px 0;
+}
+
+:deep(.el-slider) {
+    width: 330px;
+}

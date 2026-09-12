@@ -1,0 +1,20 @@
+.toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.oneText {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 600;
+    /* 加粗 */
+    color: #45a0eb;
+    /* 浅蓝，和顶部系统标题同色系、略浅一点 */
+    margin-bottom: 8px;
+}
+
+.select {
+    width: 350px;
+    height: 24px
+}
