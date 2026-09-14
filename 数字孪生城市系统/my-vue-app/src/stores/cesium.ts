@@ -15,7 +15,7 @@ export const useCesiumStore = defineStore('cesium', () => {
 
     // ========== actions ==========
     const initViewer = async (containerId: string) => {
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYTdiYzE2NC1lOTkyLTQyZmEtYWIxNy1kYzUyOWEzZWI5ODAiLCJpZCI6NDEzOTI0LCJpYXQiOjE3NzUzNTc3MzZ9.GKTAtYPpDqexLD4sF7vBfZx_1NbTsqh26FImdc4HWkY'
+        Cesium.Ion.defaultAccessToken = '请输入您的token'
 
         const v = new Cesium.Viewer(containerId, {
             geocoder: false,

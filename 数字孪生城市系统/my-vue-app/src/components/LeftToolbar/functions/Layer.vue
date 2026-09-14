@@ -51,7 +51,7 @@ const loadDefault = (v: Cesium.Viewer) => {
 
 const loadTianditu = (v: Cesium.Viewer) => {
     v.imageryLayers.removeAll()
-    const tianditu_Token = '424afc8601af28396bb101c3eae3b754'
+    const tianditu_Token = '请输入您的Token'
 
     const imgImageryLayer = new Cesium.WebMapTileServiceImageryProvider({
         url: `http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&tk=${tianditu_Token}`,
