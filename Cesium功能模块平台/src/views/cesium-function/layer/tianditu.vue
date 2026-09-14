@@ -36,7 +36,7 @@ const options = [
     { value: 'ter', label: '地形晕渲' },
     { value: 'cta', label: '地形注记' },
 ]
-const tianditu_Token = '424afc8601af28396bb101c3eae3b754';  // ← 换成你申请的 Key
+const tianditu_Token = '';  // ← 换成你申请的 Key
 
 
 const onMapReady = (cesiumViewer: Cesium.Viewer) => {
