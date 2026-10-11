@@ -2,6 +2,7 @@ package com.webgis.postgis.interceptor;
 
 import com.webgis.postgis.annotation.RequireRole;
 import com.webgis.postgis.common.util.JwtUtil;
+import com.webgis.postgis.service.TokenBlacklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -12,9 +13,11 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class JwtAuthInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
 
-    public JwtAuthInterceptor(JwtUtil jwtUtil) {
+    public JwtAuthInterceptor(JwtUtil jwtUtil,TokenBlacklistService tokenBlacklistService) {
         this.jwtUtil = jwtUtil;
+        this.tokenBlacklistService=tokenBlacklistService;
     }
 
     @Override
@@ -39,6 +42,14 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
         String token = authorization.substring(7);
 
+        //token是否在Redis黑名单
+        if(tokenBlacklistService.isBlacklist(token)){
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"message\":\"Token已退出登录\"}");
+            return false;
+        }
+
         // 验证 Token 签名和过期时间
         if (!jwtUtil.isValid(token)) {
             writeError(response, 401, "登录已过期，请重新登录");
@@ -50,13 +61,13 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
         request.setAttribute("username", jwtUtil.getUsername(token));
         request.setAttribute("role", jwtUtil.getRole(token));
 
-        // 检查接口是否要求特定角色
+        // 检查接口是否要求特定（管理员）角色
         if (handler instanceof HandlerMethod handlerMethod) {
             RequireRole requireRole =
                     handlerMethod.getMethodAnnotation(RequireRole.class);
 
             if (requireRole != null) {
-                String currentRole = jwtUtil.getRole(token);
+                String currentRole = jwtUtil.getRole(token);//从token解析出role
 
                 if (!requireRole.value().equals(currentRole)) {
                     writeError(response, 403, "没有权限执行此操作");

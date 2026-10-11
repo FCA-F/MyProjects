@@ -25,9 +25,8 @@ public class RoadController {
     public ResponseEntity<IPage<Road>> list(
             @RequestParam(defaultValue = "1") Integer pageNum,
             @RequestParam(defaultValue = "10") Integer pageSize,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String fclass) {
-        return ResponseEntity.ok(RoadService.listPage(pageNum, pageSize,keyword,fclass));
+            @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(RoadService.listPage(pageNum, pageSize,keyword));
     }
 
     @PostMapping("/post")

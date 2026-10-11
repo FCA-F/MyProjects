@@ -13,14 +13,14 @@ export interface LoginVO {
     token: string
 }
 
-export interface ApiResult<T> {
+export interface Result<T> {
     code: number
     message: string
     data: T
 }
 
 export function login(data: LoginRequest) {
-    return request.post<ApiResult<LoginVO>>('/login', data)
+    return request.post<Result<LoginVO>>('/login', data)
 }
 
 export interface RegisterRequest {
@@ -31,5 +31,16 @@ export interface RegisterRequest {
 }
 
 export function register(data: RegisterRequest) {
-    return request.post<ApiResult<null>>('/register', data)
+    return request.post<Result<null>>('/register', data)
 }
+
+export function logout() {
+    return request.post('/logout')
+}
+
+export function validateToken(token: string) {
+    return request.get<Result<boolean>>('/validToken', { params: { token } })
+}
+
+// 保留旧名称，避免已有调用方因为拼写修正而失效。
+export const vaildToken = validateToken

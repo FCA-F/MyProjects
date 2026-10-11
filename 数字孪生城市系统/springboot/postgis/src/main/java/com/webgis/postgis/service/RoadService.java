@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 
 
 public interface RoadService {
-    IPage<Road> listPage(Integer pageNum, Integer pageSize,String keyword,String fclass);
+    IPage<Road> listPage(Integer pageNum, Integer pageSize,String keyword);
     boolean postRoad(PostRoadRequest road);
     boolean putRoad(Road road);
     boolean deleteByOsmId(String osmId);

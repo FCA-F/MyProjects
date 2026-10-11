@@ -11,6 +11,12 @@ spring:
     username: postgres
     password: Fca20041005
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
   configuration:
@@ -28,5 +34,11 @@ geoserver:
     zoom-stop: 14
 
 jwt:
-  secretKey: bXktbGlicmFyeS1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcw==
+  secret-key: bXktbGlicmFyeS1qd3Qtc2VjcmV0LWtleS0zMi1ieXRlcw==
   expire-hours: 2
+
+deepseek:
+  api:
+    key: ${DEEPSEEK_API_KEY:sk-852c79f4e1fe440cb2df05e347e4f1cb}
+    url: https://api.deepseek.com/chat/completions
+  model: deepseek-chat

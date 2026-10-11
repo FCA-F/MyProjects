@@ -6,8 +6,12 @@ import com.webgis.postgis.domain.SysUser;
 import com.webgis.postgis.dto.LoginRequest;
 import com.webgis.postgis.dto.RegisterRequest;
 import com.webgis.postgis.service.SysUserService;
+import com.webgis.postgis.service.TokenBlacklistService;
 import com.webgis.postgis.vo.LoginVO;
+
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,15 +23,18 @@ public class AuthController {
     private final SysUserService sysUserService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final TokenBlacklistService tokenBlacklistService;
 
     public AuthController(
             SysUserService sysUserService,
             PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            TokenBlacklistService tokenBlacklistService
     ) {
         this.sysUserService = sysUserService;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.tokenBlacklistService=tokenBlacklistService;
     }
 
     @PostMapping("/login")
@@ -111,6 +118,23 @@ public class AuthController {
         }
 
         return Result.success();
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request){
+        String authHeader=request.getHeader("Authorization");
+        if(authHeader!=null&&authHeader.startsWith("Bearer ")){
+            String token=authHeader.substring(7);
+            tokenBlacklistService.blacklist(token);
+        }
+        return ResponseEntity.ok("退出登录成功");
+    }
+
+    @GetMapping("/validToken")
+    public Result<Boolean> validToken(
+            @RequestParam String token
+    ){
+        return Result.success(jwtUtil.isValid(token));
     }
 }
 //1. SysUser.java
