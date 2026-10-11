@@ -1,0 +1,47 @@
+{
+    "pages": [
+        {
+            "path": "pages/login/login",
+            "style": {
+                "navigationBarTitleText": "智慧城市 · 登录",
+                "navigationBarTextStyle": "white",
+                "navigationBarBackgroundColor": "#143553",
+                "backgroundColor": "#143553",
+                "navigationStyle": "custom"
+            }
+        },
+        {
+            "path": "pages/home/home",
+            "style": {
+                "navigationBarTitleText": "智慧城市",
+                "navigationBarTextStyle": "black",
+                "navigationBarBackgroundColor": "#f4f8fb",
+                "backgroundColor": "#f4f8fb"
+            }
+        },
+        {
+            "path": "pages/roads/roads",
+            "style": {
+                "navigationBarTitleText": "道路数据",
+                "navigationBarTextStyle": "black",
+                "navigationBarBackgroundColor": "#f4f8fb",
+                "backgroundColor": "#f4f8fb"
+            }
+        },
+        {
+            "path": "pages/ai/ai",
+            "style": {
+                "navigationBarTitleText": "AI 助手",
+                "navigationBarTextStyle": "black",
+                "navigationBarBackgroundColor": "#f4f8fb",
+                "backgroundColor": "#f4f8fb"
+            }
+        }
+    ],
+    "globalStyle": {
+        "navigationBarTextStyle": "black",
+        "navigationBarTitleText": "智慧城市",
+        "navigationBarBackgroundColor": "#f4f8fb",
+        "backgroundColor": "#f4f8fb"
+    }
+}
