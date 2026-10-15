@@ -55,6 +55,14 @@ const routes: RouteRecordRaw[] = [
                 name: 'ai-assistant',
                 component: () => import('@/views/app/ai-assistant.vue'),
             },
+            {
+                path: 'operation-logs',
+                name: 'operation-logs',
+                component: () => import('@/views/app/operation-logs.vue'),
+                meta: {
+                    adminOnly: true,
+                },
+            },
         ],
     },
     {
@@ -132,6 +140,7 @@ const checkToken = async (token: string) => {
 
 router.beforeEach(async (to) => {
     const token = localStorage.getItem('token')
+    const user = JSON.parse(localStorage.getItem('user') || 'null') as { role?: string } | null
 
     if (token) {
         const isValid = await checkToken(token)
@@ -162,6 +171,15 @@ router.beforeEach(async (to) => {
     if (
         (to.name === 'Login' || to.name === 'Register') &&
         localStorage.getItem('token')
+    ) {
+        return {
+            name: 'home',
+        }
+    }
+
+    if (
+        to.matched.some((record) => record.meta.adminOnly) &&
+        user?.role !== 'admin'
     ) {
         return {
             name: 'home',

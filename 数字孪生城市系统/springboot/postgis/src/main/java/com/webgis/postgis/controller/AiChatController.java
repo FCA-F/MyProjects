@@ -1,5 +1,6 @@
 package com.webgis.postgis.controller;
 
+import com.webgis.postgis.annotation.OperationLog;
 import com.webgis.postgis.common.Result;
 import com.webgis.postgis.dto.ChatRequest;
 import com.webgis.postgis.service.AiChatService;
@@ -16,6 +17,7 @@ public class AiChatController {
         this.aiChatService = aiChatService;
     }
 
+    @OperationLog("AI对话")
     @PostMapping("/chat")
     public Result<ChatReplyVO> chat(
             @RequestBody ChatRequest request

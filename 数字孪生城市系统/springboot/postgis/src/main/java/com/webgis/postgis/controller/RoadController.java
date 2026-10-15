@@ -1,5 +1,6 @@
 package com.webgis.postgis.controller;
 
+import com.webgis.postgis.annotation.OperationLog;
 import com.webgis.postgis.annotation.RequireRole;
 import com.webgis.postgis.domain.Road;
 import com.webgis.postgis.dto.PostRoadRequest;
@@ -29,6 +30,7 @@ public class RoadController {
         return ResponseEntity.ok(RoadService.listPage(pageNum, pageSize,keyword));
     }
 
+    @OperationLog("新增道路")
     @PostMapping("/post")
     @RequireRole("admin")
     public  ResponseEntity<Void> post(@RequestBody PostRoadRequest road){
@@ -37,6 +39,7 @@ public class RoadController {
                 :ResponseEntity.notFound().build();
     }
 
+    @OperationLog("修改道路")
     @PutMapping("/put")
     @RequireRole("admin")
     public ResponseEntity<Void> put(@RequestBody Road road){
@@ -46,6 +49,7 @@ public class RoadController {
     }
 
 
+    @OperationLog("删除道路")
     @DeleteMapping("/delete/{osmId}")
     @RequireRole("admin")
     public ResponseEntity<Void> delete(@PathVariable String osmId) {

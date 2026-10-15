@@ -87,7 +87,7 @@ export async function initCesiumBase(
 }
 
 const initLayer = (viewer: Cesium.Viewer) => {
-    const tianditu_Token = '';  // ← 换成你申请的 Key
+    const tianditu_Token = '424afc8601af28396bb101c3eae3b754';  // ← 换成你申请的 Key
     const imgImageryLayer = new Cesium.WebMapTileServiceImageryProvider({
         url: `http://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=img&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&tk=${tianditu_Token}`,
         layer: 'img',

@@ -51,7 +51,21 @@
                 </el-icon>
                 <span>AI 助手</span>
             </el-menu-item>
+            <el-sub-menu v-if="isAdmin" index="admin">
+                <template #title>
+                    <el-icon>
+                        <Setting />
+                    </el-icon>
+                    <span>管理</span>
+                </template>
 
+                <el-menu-item index="/app/operation-logs">
+                    <el-icon>
+                        <Document />
+                    </el-icon>
+                    <span>日志管理</span>
+                </el-menu-item>
+            </el-sub-menu>
         </el-menu>
 
         <el-dropdown class="user-menu" trigger="click" @command="handleCommand">
@@ -95,13 +109,16 @@ import {
     SwitchButton,
     UserFilled,
     VideoCamera,
-    Guide
+    Guide,
+    Document,
+    Setting,
 } from '@element-plus/icons-vue'
 import { useStore } from '@/stores/store'
 
 const route = useRoute()
 const router = useRouter()
 const store = useStore()
+const isAdmin = computed(() => store.user?.role === 'admin')
 
 const activePath = computed(() => {
     if (route.path.startsWith('/app/spatial-analysis')) {
@@ -118,6 +135,9 @@ const activePath = computed(() => {
 
     if (route.path.startsWith('/app/road-management')) {
         return '/app/road-management'
+    }
+    if (route.path.startsWith('/app/operation-logs')) {
+        return 'admin'
     }
     return '/app/home'
 })
@@ -274,6 +294,29 @@ const handleCommand = (command: string) => {
 
 .nav-menu :deep(.el-icon) {
     margin-right: 7px;
+}
+
+.nav-menu :deep(.el-sub-menu__title) {
+    height: 68px;
+    padding: 0 18px;
+    border-bottom: 3px solid transparent;
+    color: #c5d5e2;
+    font-size: 14px;
+}
+
+.nav-menu :deep(.el-sub-menu:hover > .el-sub-menu__title),
+.nav-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title),
+.nav-menu :deep(.el-sub-menu.is-opened > .el-sub-menu__title) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.nav-menu :deep(.el-sub-menu.is-active > .el-sub-menu__title) {
+    border-bottom-color: #45c4b0;
+}
+
+.nav-menu :deep(.el-sub-menu__icon-arrow) {
+    color: #9fb6c9;
 }
 
 .user-menu {

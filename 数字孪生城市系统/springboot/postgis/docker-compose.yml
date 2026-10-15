@@ -1,0 +1,40 @@
+services:
+  redis:
+    image: redis:7
+    container_name: smart-city-redis
+    restart: unless-stopped
+
+  backend:
+    image: smart-city-backend:1.0
+    container_name: smart-city-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/jinan
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Fca20041005
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+
+    command:
+      - "--spring.data.redis.host=redis"
+      - "--spring.data.redis.port=6379"
+      - "--geoserver.base-url=http://host.docker.internal:8083/geoserver"
+      - "--geoserver.username=admin"
+      - "--geoserver.password=geoserver"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    depends_on:
+      - redis
+
+  frontend:
+    image: smart-city-frontend:1.0
+    container_name: smart-city-frontend
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend

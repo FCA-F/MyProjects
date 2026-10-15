@@ -1,5 +1,6 @@
 package com.webgis.postgis.controller;
 
+import com.webgis.postgis.annotation.OperationLog;
 import com.webgis.postgis.common.Result;
 import com.webgis.postgis.common.util.JwtUtil;
 import com.webgis.postgis.domain.SysUser;
@@ -37,6 +38,7 @@ public class AuthController {
         this.tokenBlacklistService=tokenBlacklistService;
     }
 
+    @OperationLog("用户登录")
     @PostMapping("/login")
     public Result<LoginVO> login(
             @Valid @RequestBody LoginRequest request
@@ -74,6 +76,7 @@ public class AuthController {
         return Result.success(loginVO);
     }
 
+    @OperationLog("用户注册")
     @PostMapping("/register")
     public Result<Void> register(
             @Valid @RequestBody RegisterRequest request
@@ -120,6 +123,7 @@ public class AuthController {
         return Result.success();
     }
 
+    @OperationLog("用户退出")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request){
         String authHeader=request.getHeader("Authorization");
